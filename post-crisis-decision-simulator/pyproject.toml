@@ -1,0 +1,33 @@
+[project]
+name = "post-crisis-decision-simulator"
+version = "0.1.0"
+description = "A multi-agent simulation framework for collective decision-making under scarcity."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "numpy>=1.26",
+    "networkx>=3.2",
+    "polars>=0.20",
+    "matplotlib>=3.8",
+    "pydantic>=2.5",
+    "typer>=0.9",
+    "pyswip>=0.2.10",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.3",
+    "mypy>=1.8",
+]
+
+[project.scripts]
+pcds = "pcds.cli:app"
+
+[tool.ruff]
+line-length = 100
+src = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
