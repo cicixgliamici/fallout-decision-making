@@ -1,0 +1,29 @@
+{
+  "name": "Shelter Alpha",
+  "description": "A small post-crisis community deciding under scarcity.",
+  "agents": 40,
+  "resources": {
+    "food": 100,
+    "water": 100,
+    "medicine": 50,
+    "energy": 50,
+    "security": 50
+  },
+  "policies": ["farming", "medicine", "defense", "exploration"],
+  "trust_topology": "expertise_clustered",
+  "trust_probability": 0.18,
+  "parameters": {
+    "food_consumption": 0.8,
+    "water_consumption": 0.7,
+    "medicine_consumption": 0.08,
+    "low_security_threshold": 30,
+    "shock": {
+      "probability": 0.05,
+      "food_loss": 8,
+      "water_loss": 6,
+      "medicine_loss": 2,
+      "security_loss": 4,
+      "health_damage": 0.01
+    }
+  }
+}

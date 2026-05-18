@@ -1,0 +1,11 @@
+numpy>=1.26
+networkx>=3.2
+polars>=0.20
+matplotlib>=3.8
+pydantic>=2.5
+typer>=0.9
+pyswip>=0.2.10
+pytest>=8.0
+ruff>=0.3
+mypy>=1.8
+pytest-cov>=5.0

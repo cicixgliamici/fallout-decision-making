@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+title: "Fallout-Decision-Making"
+message: "If you use this research artifact, please cite it."
+type: software
+authors:
+  - family-names: "Project Contributors"
+version: 0.1.0
+date-released: 2026-05-16
+abstract: "A reproducible simulation artifact for studying delegation under scarcity."
+license: MIT
