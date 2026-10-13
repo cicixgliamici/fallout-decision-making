@@ -41,7 +41,9 @@ EXPERIMENTS: dict[str, dict] = {
     },
     "environmental_shocks": {
         "shock": EnvironmentalShock(
-            probability=0.18,
+            # Keep this stress condition stronger than the revised baseline
+            # (0.22), so the suite does not repeat an identical scenario.
+            probability=0.30,
             food_loss=12.0,
             water_loss=10.0,
             medicine_loss=4.0,

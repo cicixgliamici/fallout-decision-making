@@ -14,6 +14,8 @@ reading every file in repository order is unnecessary.
 | [assessment.py](../src/pcds/assessment.py) | `assess_policy`, `update_preferences` | How can imperfect information change a member's current ranking? |
 | [voting.py](../src/pcds/voting.py) | `voting_outcome`, `_resolve_delegate` | Which policy wins, and who actually controls each original ballot? |
 | [randomness.py](../src/pcds/randomness.py) | `event_rng`, `sample_environment` | How do different mechanisms share external conditions? |
+| [events.py](../src/pcds/events.py) | `SimulationEvent`, `EventRecorder` | Which ordered physical facts are captured when recording is enabled? |
+| [narrative.py](../src/pcds/narrative.py) | `NarrativeProfile`, `render_report`, `export_event_log` | How do the same records produce different presentations without changing outcomes? |
 | [metrics.py](../src/pcds/metrics.py) | `welfare_components`, `preference_satisfaction`, `delegation_power` | Which quantities are measured, and whose outcomes count? |
 
 An underscore at the start of a function name marks an internal helper.

@@ -11,10 +11,22 @@ used below, see the [glossary](glossary.md). For the equations, see the
 
 ## The Starting Community
 
+The narrative frame is Vault 47, a Fallout-inspired isolated colony whose
+governance is the experiment. Can residents sustain themselves with limited
+resources, and what political costs accompany that survival? Imagined lunar
+bases and space settlements provide a parallel motivation for this problem.
+The reader compares histories from the Overseer's research terminal; this
+context does not introduce additional game mechanics.
+
 [Shelter Alpha](../data/scenarios/shelter_alpha.json) starts with 40 generated
 members and shared resource stocks. Each member has a role, a health level,
 personal policy priorities, and attitudes toward risk and cooperation. The
 generator creates varied members rather than 40 identical voters.
+
+Shelter Alpha remains the technical scenario name for compatibility. Its
+rebalanced budget represents net food/water use after routine recycling and
+combines hydroponic food production with water recovery. See
+[resource balance](resource_balance.md) for the assumptions and comparisons.
 
 A directed trust network describes possible delegation: Alice trusting Ben does
 not imply that Ben trusts Alice. Trust edges have weights; a higher weight makes

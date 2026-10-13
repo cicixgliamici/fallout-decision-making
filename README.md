@@ -1,5 +1,22 @@
 # Post-Crisis Collective Decision Simulator
 
+**Vault 47 — isolated colony governance experiment.** Forty residents live in a
+Fallout-inspired underground Vault. The experimental premise is to investigate
+how people can govern an isolated colony with finite supplies, incomplete
+information, and competing needs: conditions also relevant to imagined lunar
+bases and long-duration space missions. Different voting and delegation rules
+face the same starting conditions and external pressures. Success is assessed
+through survival, health, reserves, representation, and concentration of power.
+
+Read [Setting and narrative design](Setting.md) for the fictional context.
+The [Vault 47 protocol](docs/vault_protocol.md) introduces the colony experiment;
+the [policy dictionary](docs/policy_dictionary.md) connects each Vault priority
+to its implemented effects and limits.
+Generate a factual terminal record with the
+[deterministic report and event log](docs/event_reports.md).
+The current implementation is a simulator; no playable shifts or incident
+interface are introduced by this narrative framing.
+
 A research prototype that asks how a community should make collective decisions
 when food, water, medicine, energy, and security are limited. It compares direct
 voting with delegation to trusted specialists, then measures the consequences
@@ -15,6 +32,8 @@ predictions about real communities.
 
 | Your purpose | Recommended document |
 | --- | --- |
+| Enter the Vault setting and understand its choices | [Experiment protocol](docs/vault_protocol.md), [policy dictionary](docs/policy_dictionary.md) |
+| Follow a simulated colony's decisions and incidents | [Deterministic reports and event records](docs/event_reports.md) |
 | Understand the project without reading code | [Plain-language walkthrough](docs/walkthrough.md) |
 | Explain it to a reviewer or admissions board | [Presentation guide](docs/presentation_guide.md) |
 | See what is ready and what still needs work | [Project status](docs/project_status.md) |
@@ -79,6 +98,7 @@ python -m pytest
 
 ```bash
 pcds run --rule majority --steps 5 --agents 8 --seed 42
+pcds run --rule expert_delegation --steps 5 --seed 42 --report results/vault47/report.txt --event-log results/vault47/events.json
 pcds compare --steps 2 --runs 2 --agents 8 --output results/smoke.csv
 pcds suite --runs 20 --steps 40 --seed 42 --output-dir results/review_snapshot
 ```
@@ -109,10 +129,17 @@ Adaptive assessments are configured under `parameters.decision`. Use
 `"mode": "fixed"` for static rankings, or equal specialist/general accuracy to
 remove the information advantage. The suite includes these comparisons.
 
-The recorded check on 2026-10-13 passed 140 Python tests and validated 640
-simulations at 40 rounds. Of those simulations, 411 ended without survivors.
-This is evidence that the current scenarios need further examination, not a
-conclusion that delegation fails in real crises. See [project status](docs/project_status.md).
+The earlier check on 2026-10-13 validated 640 simulations at 40 rounds;
+411 ended without survivors under the original resource budget. The baseline
+now uses lower net consumption and a combined food-production/water-recovery
+policy, with a subsequent hazard revision recording 58 extinctions among 400
+baseline trials. See [resource balance](docs/resource_balance.md) for the rationale and
+new checks, and [project status](docs/project_status.md) for verification scope.
+
+See [context architecture](docs/context_architecture.md) for the
+connection between reusable mechanics, scenario assumptions, and narrative
+profiles. Deterministic text reports and replaceable vocabulary profiles are
+implemented; specific infrastructure incidents remain future work.
 
 ## Components and Their Actual Scope
 

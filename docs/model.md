@@ -93,8 +93,9 @@ The current policy set is finite:
 - `exploration`
 
 Policy impacts are scenario parameters. Exploration has stochastic upside and
-risk; defense and medicine reduce different failure modes; farming improves
-food at a water cost.
+risk; defense and medicine reduce different failure modes. In the rebalanced
+Shelter Alpha baseline, farming bundles hydroponic food production with water
+recovery. The legacy scenario retains farming's original water cost.
 
 Consumption is measured per living member, while policy stock changes are
 community-wide amounts. These units matter: increasing population without
@@ -102,6 +103,10 @@ increasing policy production can make shortages unavoidable under a fixed
 budget. Energy costs currently reduce a nonnegative stock counter without a
 universal action-affordability gate. Medicine treatment is not stock-budgeted.
 See [limitations](limitations.md) before treating these effects as realistic.
+
+The baseline's consumption rates represent net reserve draw after routine
+recovery. See [resource balance](resource_balance.md) for the declared budget,
+a feasible finite-horizon schedule, and the archived original assumptions.
 
 ## Resources and Shocks
 

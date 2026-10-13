@@ -1,43 +1,115 @@
 {
   "name": "Shelter Alpha",
-  "description": "A small post-crisis community deciding under scarcity.",
+  "description": "Vault 47: an isolated colony governance experiment, testing survival and representation under limited resources. Shelter Alpha is the retained technical scenario identifier.",
   "agents": 40,
   "resources": {
-    "food": 100,
-    "water": 100,
-    "medicine": 50,
-    "energy": 50,
-    "security": 50
+    "food": 100.0,
+    "water": 100.0,
+    "medicine": 50.0,
+    "energy": 50.0,
+    "security": 50.0
   },
-  "policies": ["farming", "medicine", "defense", "exploration"],
-  "trust_topology": "expertise_clustered",
-  "trust_probability": 0.18,
+  "policies": [
+    "farming",
+    "medicine",
+    "defense",
+    "exploration"
+  ],
   "parameters": {
-    "metrics": {
-      "welfare_weights": {"survival": 0.65, "health": 0.25, "resources": 0.10},
-      "resource_reference": {"food": 100, "water": 100, "medicine": 50, "energy": 50, "security": 50}
-    },
+    "food_consumption": 0.2,
+    "water_consumption": 0.15,
+    "medicine_consumption": 0.04,
+    "scarcity_food_threshold": 0.5,
+    "scarcity_water_threshold": 0.5,
+    "scarcity_medicine_threshold": 0.05,
+    "scarcity_food_damage": 0.05,
+    "scarcity_water_damage": 0.06,
+    "scarcity_medicine_damage": 0.02,
+    "low_security_threshold": 30.0,
+    "low_security_damage": 0.02,
+    "random_health_damage_max": 0.015,
+    "death_threshold": 0.05,
     "decision": {
       "mode": "adaptive",
       "general_accuracy": 0.55,
-      "expert_accuracy": 0.90,
+      "expert_accuracy": 0.9,
       "observation_noise": 0.6,
       "effect_noise": 0.6,
       "planning_horizon": 3,
       "preference_weight": 0.01,
       "reserve_weight": 0.02
     },
-    "food_consumption": 0.8,
-    "water_consumption": 0.7,
-    "medicine_consumption": 0.08,
-    "low_security_threshold": 30,
+    "metrics": {
+      "welfare_weights": {
+        "survival": 0.65,
+        "health": 0.25,
+        "resources": 0.1
+      },
+      "resource_reference": {
+        "food": 100.0,
+        "water": 100.0,
+        "medicine": 50.0,
+        "energy": 50.0,
+        "security": 50.0
+      }
+    },
     "shock": {
-      "probability": 0.05,
-      "food_loss": 8,
-      "water_loss": 6,
-      "medicine_loss": 2,
-      "security_loss": 4,
-      "health_damage": 0.01
+      "probability": 0.22,
+      "food_loss": 12,
+      "water_loss": 10,
+      "medicine_loss": 4,
+      "security_loss": 6,
+      "health_damage": 0.025
+    },
+    "policy_impacts": {
+      "farming": {
+        "energy_cost": 2.0,
+        "food_delta": 14.0,
+        "water_delta": 12.0,
+        "medicine_delta": 0.0,
+        "security_delta": 0.0,
+        "health_boost": 0.0,
+        "injury_probability": 0.0,
+        "injury_min": 0.0,
+        "injury_max": 0.0
+      },
+      "medicine": {
+        "energy_cost": 2.0,
+        "food_delta": 0.0,
+        "water_delta": 0.0,
+        "medicine_delta": 8.0,
+        "security_delta": 0.0,
+        "health_boost": 0.08,
+        "injury_probability": 0.0,
+        "injury_min": 0.0,
+        "injury_max": 0.0
+      },
+      "defense": {
+        "energy_cost": 4.0,
+        "food_delta": 0.0,
+        "water_delta": 0.0,
+        "medicine_delta": 0.0,
+        "security_delta": 9.0,
+        "health_boost": 0.0,
+        "injury_probability": 0.0,
+        "injury_min": 0.0,
+        "injury_max": 0.0
+      },
+      "exploration": {
+        "energy_cost": 2.0,
+        "food_delta": 7.0,
+        "water_delta": 5.0,
+        "medicine_delta": 2.5,
+        "security_delta": 0.0,
+        "health_boost": 0.0,
+        "injury_probability": 0.02,
+        "injury_min": 0.08,
+        "injury_max": 0.2
+      }
     }
-  }
+  },
+  "trust_topology": "expertise_clustered",
+  "trust_probability": 0.18,
+  "trust_edges": null,
+  "role_distribution": null
 }

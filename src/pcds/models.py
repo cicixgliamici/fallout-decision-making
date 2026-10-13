@@ -11,6 +11,8 @@ from typing import Dict, List, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from pcds.events import SimulationEvent
+
 
 class Role(str, Enum):
     """A member role identifies a specialist policy domain, not a privileged voting right."""
@@ -256,3 +258,5 @@ class RoundResult(BaseModel):
     vote_weights: Dict[str, int] = Field(default_factory=dict)
     welfare_components: Dict[str, float] = Field(default_factory=dict)
     welfare_sensitivity: Dict[str, float] = Field(default_factory=dict)
+    # Events are opt-in observations, independent of metrics and policy selection.
+    events: list[SimulationEvent] = Field(default_factory=list)

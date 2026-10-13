@@ -1,0 +1,83 @@
+{
+  "name": "Shelter Alpha",
+  "description": "Vault 47: an isolated colony governance experiment, testing survival and representation under limited resources. Shelter Alpha is the retained technical scenario identifier.",
+  "agents": 40,
+  "resources": {
+    "food": 100,
+    "water": 100,
+    "medicine": 50,
+    "energy": 50,
+    "security": 50
+  },
+  "policies": [
+    "farming",
+    "medicine",
+    "defense",
+    "exploration"
+  ],
+  "trust_topology": "expertise_clustered",
+  "trust_probability": 0.18,
+  "parameters": {
+    "metrics": {
+      "welfare_weights": {
+        "survival": 0.65,
+        "health": 0.25,
+        "resources": 0.1
+      },
+      "resource_reference": {
+        "food": 100,
+        "water": 100,
+        "medicine": 50,
+        "energy": 50,
+        "security": 50
+      }
+    },
+    "decision": {
+      "mode": "adaptive",
+      "general_accuracy": 0.55,
+      "expert_accuracy": 0.9,
+      "observation_noise": 0.6,
+      "effect_noise": 0.6,
+      "planning_horizon": 3,
+      "preference_weight": 0.01,
+      "reserve_weight": 0.02
+    },
+    "food_consumption": 0.2,
+    "water_consumption": 0.15,
+    "medicine_consumption": 0.04,
+    "low_security_threshold": 30,
+    "shock": {
+      "probability": 0.05,
+      "food_loss": 8,
+      "water_loss": 6,
+      "medicine_loss": 2,
+      "security_loss": 4,
+      "health_damage": 0.01
+    },
+    "policy_impacts": {
+      "farming": {
+        "energy_cost": 2,
+        "food_delta": 14,
+        "water_delta": 12
+      },
+      "medicine": {
+        "energy_cost": 2,
+        "medicine_delta": 8,
+        "health_boost": 0.08
+      },
+      "defense": {
+        "energy_cost": 4,
+        "security_delta": 9
+      },
+      "exploration": {
+        "energy_cost": 2,
+        "food_delta": 7,
+        "water_delta": 5,
+        "medicine_delta": 2.5,
+        "injury_probability": 0.02,
+        "injury_min": 0.08,
+        "injury_max": 0.2
+      }
+    }
+  }
+}

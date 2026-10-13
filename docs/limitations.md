@@ -6,10 +6,13 @@ the [presentation guide](presentation_guide.md) explains how to state its scope.
 
 ## Material Dynamics Need Further Examination
 
-The recorded 640-run review suite ended in extinction in 411 runs. This can limit
-what comparisons reveal about institutions. Initially, Shelter Alpha's 40 members
-consume 28 water units each round, while exploration supplies at most 10. As
-members die, consumption falls; mortality therefore changes the later budget.
+The original 640-run review suite ended in extinction in 411 runs. Its archived
+scenario consumes 28 water units per round for 40 members, while exploration
+supplies at most 10. The default baseline now reduces net reserve consumption
+and combines food production with water recovery; see
+[resource balance](resource_balance.md). These are hypothetical design
+assumptions, not empirically calibrated recycling rates. As members die,
+consumption falls; mortality therefore still changes the later budget.
 
 Policy effects, consumption, and health damage are assumed rather than fitted
 to empirical observations. Energy has no current replenishing policy, costs are

@@ -11,8 +11,10 @@ import polars as pl
 import typer
 
 from pcds.experiments import run_experiment_suite, summarize_rules
+from pcds.models import RoundResult
+from pcds.narrative import export_event_log, load_profile, render_report
 from pcds.paired_analysis import build_paired_differences, summarize_paired_effects
-from pcds.scenarios import default_scenario_path
+from pcds.scenarios import default_scenario_path, load_scenario
 from pcds.simulation import compare_rules, run_simulation
 
 app = typer.Typer(help="Post-Crisis Collective Decision Simulator")
@@ -28,18 +30,48 @@ def run(
     seed: int = typer.Option(42, help="Random seed."),
     scenario: Path = typer.Option(default_scenario_path(), help="Scenario JSON path."),
     use_prolog: bool = typer.Option(False, help="Use SWI-Prolog governance rules when available."),
+    report: Path | None = typer.Option(None, help="Write a deterministic text report."),
+    event_log: Path | None = typer.Option(None, help="Write a neutral JSON event trace."),
+    profile: str = typer.Option("vault47", help="Report profile: vault47, neutral, or JSON path."),
 ) -> None:
     """Print one trajectory's final material outcomes and decision-time representation."""
+    # Resolve presentation before running; an invalid profile must not waste a simulation.
+    try:
+        narrative_profile = load_profile(profile) if report else None
+    except (OSError, ValueError) as error:
+        raise typer.BadParameter(str(error), param_hint="--profile") from error
+    if report and event_log and report.resolve() == event_log.resolve():
+        raise typer.BadParameter("report and event log must use different paths")
+    scenario_configuration = load_scenario(scenario)
     results = run_simulation(
         rule=rule,
         steps=steps,
         n_agents=agents,
         seed=seed,
-        scenario=scenario,
+        scenario=scenario_configuration,
         use_prolog=use_prolog,
+        record_events=report is not None or event_log is not None,
     )
-    last = results[-1]
-    typer.echo(f"Rule: {rule}")
+    _print_run_summary(results[-1])
+    if report:
+        _write_artifact(report, render_report(results, narrative_profile))
+    if event_log:
+        # Preserve the actual synthetic population override in replay metadata.
+        if isinstance(scenario_configuration.agents, int):
+            scenario_configuration.agents = results[0].initial_population
+        _write_artifact(
+            event_log,
+            export_event_log(
+                results,
+                scenario_configuration.model_dump(mode="json"),
+                governance_checks_enabled=use_prolog,
+            ),
+        )
+
+
+def _print_run_summary(last: RoundResult) -> None:
+    """Keep the established terminal summary separate from optional artifacts."""
+    typer.echo(f"Rule: {last.rule}")
     typer.echo(f"Selected policy at final step: {last.selected_policy.value}")
     typer.echo(f"Survival rate: {last.survival_rate:.3f}")
     typer.echo(f"Welfare: {last.welfare:.3f}")
@@ -57,6 +89,13 @@ def run(
     typer.echo(f"Welfare contributions: {last.welfare_components}")
     typer.echo(f"Welfare weight sensitivity: {last.welfare_sensitivity}")
     typer.echo(f"Resources: {last.resources}")
+
+
+def _write_artifact(path: Path, content: str) -> None:
+    """Keep filesystem operations outside both simulation and rendering."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(content, encoding="utf-8", newline="\n")
+    typer.echo(f"Saved {path}")
 
 
 @app.command()

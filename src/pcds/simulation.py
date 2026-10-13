@@ -15,6 +15,7 @@ import networkx as nx
 import polars as pl
 
 from pcds.assessment import update_preferences
+from pcds.events import EventRecorder
 from pcds.factory import create_agents_for_scenario, create_trust_graph_for_scenario
 from pcds.metric_definitions import METRIC_SCHEMA, NULLABLE_METRICS
 from pcds.metrics import (
@@ -47,6 +48,7 @@ def run_simulation(
     seed: int | None = None,
     use_prolog: bool = False,
     scenario: Scenario | str | Path | None = None,
+    record_events: bool = False,
 ) -> list[RoundResult]:
     """Run one mechanism over a fixed number of rounds and retain its full trajectory.
 
@@ -79,6 +81,7 @@ def run_simulation(
     results: list[RoundResult] = []
 
     for step in range(steps):
+        recorder = EventRecorder(step) if record_events else None
         # A round separates outside conditions, the decision, and its effects.
         environment = sample_environment(run_seed, step, agents, parameters)
         preference_changes, assessment_error = update_preferences(
@@ -91,15 +94,26 @@ def run_simulation(
         eligible_agents = prolog.filter_eligible(agents) if prolog else _eligible_agents(agents)
         outcome = _select_policy(rule, eligible_agents, trust_graph)
         selected = outcome.policy
+        if recorder:
+            recorder.record(
+                "policy_selected",
+                selected.value,
+                "vote" if eligible_agents else "no_eligible_voters_recording_default",
+                details={"eligible_voters": float(len(eligible_agents))},
+            )
         if prolog and not prolog.allocation_allowed(selected, state):
             selected = _first_allowed_policy(prolog, state)
+            if recorder:
+                recorder.record("policy_override", selected.value, outcome.policy.value)
         # Satisfaction and ballot ownership describe the decision-time
         # electorate, before effects can kill a voter or change their health.
         satisfaction = preference_satisfaction(eligible_agents, selected)
         prior_satisfaction = preference_satisfaction(eligible_agents, selected, priors)
         power = delegation_power(outcome.representatives)
-        _apply_policy(selected, agents, state, run_seed, step, parameters)
-        shock_occurred = _apply_environmental_pressure(agents, state, environment, parameters)
+        _apply_policy(selected, agents, state, run_seed, step, parameters, recorder)
+        shock_occurred = _apply_environmental_pressure(
+            agents, state, environment, parameters, recorder
+        )
 
         results.append(
             RoundResult(
@@ -121,6 +135,7 @@ def run_simulation(
                 prior_preference_satisfaction=prior_satisfaction,
                 vote_representatives=outcome.representatives,
                 vote_weights=dict(Counter(outcome.representatives.values())),
+                events=recorder.events if recorder else [],
                 **power,
             )
         )
@@ -263,6 +278,7 @@ def _apply_policy(
     seed: int,
     step: int,
     parameters: SimulationParameters,
+    recorder: EventRecorder | None = None,
 ) -> None:
     """Apply the scenario's community-wide stock changes and individual health effects.
 
@@ -273,18 +289,46 @@ def _apply_policy(
     # Policy impacts update shared resources first; individual health effects
     # are applied afterward so the same decision can affect both the shelter and
     # its members.
-    state.energy = max(0.0, state.energy - impact.energy_cost)
+    _change_resource(state, "energy", -impact.energy_cost, policy.value, recorder)
     # Zero is an accounting floor, not a universal affordability check: the
     # current physical model still applies effects when energy is insufficient.
     for resource in ("food", "water", "medicine"):
         delta = getattr(impact, f"{resource}_delta")
         rng = event_rng(seed, "policy_resource", step, policy.value, resource)
-        setattr(
-            state,
-            resource,
-            max(0.0, getattr(state, resource) + _stochastic_gain(delta, rng, policy)),
+        _change_resource(
+            state, resource, _stochastic_gain(delta, rng, policy), policy.value, recorder
         )
-    state.security = max(0.0, state.security + impact.security_delta)
+    _change_resource(state, "security", impact.security_delta, policy.value, recorder)
+
+    _apply_treatment(policy, agents, seed, step, parameters, recorder)
+    _apply_injuries(policy, agents, seed, step, parameters, recorder)
+
+
+def _change_resource(
+    state: CommunityState,
+    resource: str,
+    change: float,
+    cause: str,
+    recorder: EventRecorder | None,
+) -> None:
+    """Retain intended and actual changes so depleted stocks are not overreported."""
+    before = getattr(state, resource)
+    after = max(0.0, before + change)
+    setattr(state, resource, after)
+    if recorder and change != 0.0:
+        recorder.record("resource_change", resource, cause, before, after, change)
+
+
+def _apply_treatment(
+    policy: Policy,
+    agents: list[Agent],
+    seed: int,
+    step: int,
+    parameters: SimulationParameters,
+    recorder: EventRecorder | None,
+) -> None:
+    """Record actual healing without inventing medicine doses or patient assignments."""
+    impact = parameters.policy_impacts[policy]
 
     if impact.health_boost > 0:
         # Treatment currently uses a health threshold, not a medicine budget
@@ -293,7 +337,24 @@ def _apply_policy(
             if agent.alive and agent.health < 0.75:
                 rng = event_rng(seed, "policy_healing", step, policy.value, agent.name)
                 boost = rng.uniform(impact.health_boost * 0.5, impact.health_boost * 1.5)
+                before = agent.health
                 agent.health = min(1.0, agent.health + boost)
+                if recorder:
+                    recorder.record(
+                        "treatment", agent.name, policy.value, before, agent.health, boost
+                    )
+
+
+def _apply_injuries(
+    policy: Policy,
+    agents: list[Agent],
+    seed: int,
+    step: int,
+    parameters: SimulationParameters,
+    recorder: EventRecorder | None,
+) -> None:
+    """Use the existing draw exactly once, then observe its effect."""
+    impact = parameters.policy_impacts[policy]
 
     for agent in agents:
         # Per-agent policy draws preserve the same potential outcome when
@@ -302,9 +363,11 @@ def _apply_policy(
             continue
         rng = event_rng(seed, "policy_injury", step, policy.value, agent.name)
         if rng.random() < impact.injury_probability:
-            agent.health = max(
-                0.0, agent.health - rng.uniform(impact.injury_min, impact.injury_max)
-            )
+            injury = rng.uniform(impact.injury_min, impact.injury_max)
+            before = agent.health
+            agent.health = max(0.0, agent.health - injury)
+            if recorder:
+                recorder.record("injury", agent.name, policy.value, before, agent.health, -injury)
 
 
 def _apply_environmental_pressure(
@@ -312,6 +375,7 @@ def _apply_environmental_pressure(
     state: CommunityState,
     environment: EnvironmentalDraws,
     parameters: SimulationParameters,
+    recorder: EventRecorder | None = None,
 ) -> bool:
     """Consume supplies, calculate scarcity, apply shocks, and update survival.
 
@@ -323,35 +387,117 @@ def _apply_environmental_pressure(
 
     # Scarcity pressure is intentionally simple: resources are consumed by the
     # surviving population, then shortages translate into health damage.
-    state.food = max(0.0, state.food - parameters.food_consumption * population)
-    state.water = max(0.0, state.water - parameters.water_consumption * population)
-    state.medicine = max(0.0, state.medicine - parameters.medicine_consumption * population)
+    for resource in ("food", "water", "medicine"):
+        consumption = getattr(parameters, f"{resource}_consumption") * population
+        _change_resource(state, resource, -consumption, "consumption", recorder)
 
-    scarcity = 0.0
-    if state.food <= population * parameters.scarcity_food_threshold:
-        scarcity += parameters.scarcity_food_damage
-    if state.water <= population * parameters.scarcity_water_threshold:
-        scarcity += parameters.scarcity_water_damage
-    if state.medicine <= population * parameters.scarcity_medicine_threshold:
-        scarcity += parameters.scarcity_medicine_damage
-    if state.security < parameters.low_security_threshold:
-        scarcity += parameters.low_security_damage
+    scarcity = _scarcity_pressure(state, population, parameters, recorder)
+    shortage_damage = scarcity
 
     shock_occurred = environment.shock_draw < parameters.shock.probability
     # Shock losses do not trigger a second scarcity calculation in this round.
     if shock_occurred:
-        state.food = max(0.0, state.food - parameters.shock.food_loss)
-        state.water = max(0.0, state.water - parameters.shock.water_loss)
-        state.medicine = max(0.0, state.medicine - parameters.shock.medicine_loss)
-        state.security = max(0.0, state.security - parameters.shock.security_loss)
+        if recorder:
+            recorder.record(
+                "shock",
+                "community",
+                "external_shock",
+                details={"health_damage": parameters.shock.health_damage},
+            )
+        for resource in ("food", "water", "medicine", "security"):
+            loss = getattr(parameters.shock, f"{resource}_loss")
+            _change_resource(state, resource, -loss, "external_shock", recorder)
         scarcity += parameters.shock.health_damage
 
+    _damage_residents(
+        alive_agents,
+        environment,
+        parameters,
+        scarcity,
+        shortage_damage,
+        shock_occurred,
+        recorder,
+    )
+    return shock_occurred
+
+
+def _scarcity_pressure(
+    state: CommunityState,
+    population: int,
+    parameters: SimulationParameters,
+    recorder: EventRecorder | None,
+) -> float:
+    """Check shortages before shock losses, preserving the existing update order."""
+    scarcity = 0.0
+    for resource in ("food", "water", "medicine", "security"):
+        threshold = (
+            parameters.low_security_threshold
+            if resource == "security"
+            else population * getattr(parameters, f"scarcity_{resource}_threshold")
+        )
+        stock = getattr(state, resource)
+        insufficient = stock < threshold if resource == "security" else stock <= threshold
+        if not insufficient:
+            continue
+        damage = (
+            parameters.low_security_damage
+            if resource == "security"
+            else getattr(parameters, f"scarcity_{resource}_damage")
+        )
+        scarcity += damage
+        # Extinct communities have no exposed residents, even when a zero stock
+        # satisfies the numerical threshold comparison retained by the engine.
+        if recorder and population:
+            recorder.record(
+                "shortage",
+                resource,
+                "post_consumption_threshold",
+                before=stock,
+                after=stock,
+                details={"threshold": threshold, "health_damage": damage},
+            )
+    return scarcity
+
+
+def _damage_residents(
+    alive_agents: list[Agent],
+    environment: EnvironmentalDraws,
+    parameters: SimulationParameters,
+    scarcity: float,
+    shortage_damage: float,
+    shock_occurred: bool,
+    recorder: EventRecorder | None,
+) -> None:
+    """Record damage components and threshold deaths, without attributing a sole cause."""
     for agent in alive_agents:
         damage = scarcity + environment.health_damage[agent.name]
+        before = agent.health
         agent.health = max(0.0, agent.health - damage)
+        if recorder and damage != 0.0:
+            recorder.record(
+                "health_damage",
+                agent.name,
+                "environmental_pressure",
+                before,
+                agent.health,
+                -damage,
+                details={
+                    "shortage": shortage_damage,
+                    "shock": parameters.shock.health_damage if shock_occurred else 0.0,
+                    "background": environment.health_damage[agent.name],
+                },
+            )
         if agent.health <= parameters.death_threshold:
             agent.alive = False
-    return shock_occurred
+            if recorder:
+                recorder.record(
+                    "death",
+                    agent.name,
+                    "health_at_or_below_death_threshold",
+                    1.0,
+                    0.0,
+                    details={"health": agent.health, "threshold": parameters.death_threshold},
+                )
 
 
 def _eligible_agents(agents: list[Agent]) -> list[Agent]:
