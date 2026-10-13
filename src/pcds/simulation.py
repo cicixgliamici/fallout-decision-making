@@ -1,63 +1,105 @@
+"""Coordinate repeated choices, physical consequences, and measurements.
+
+Decision-time representation and end-of-round health have different populations.
+"""
+
 from __future__ import annotations
 
+import hashlib
+import json
 import random
+from collections import Counter
 from pathlib import Path
-from typing import Callable
 
 import networkx as nx
 import polars as pl
 
+from pcds.assessment import update_preferences
 from pcds.factory import create_agents_for_scenario, create_trust_graph_for_scenario
-from pcds.metrics import health_inequality, resource_resilience, social_welfare, survival_rate
+from pcds.metric_definitions import METRIC_SCHEMA, NULLABLE_METRICS
+from pcds.metrics import (
+    WELFARE_PROFILES,
+    delegation_power,
+    health_inequality,
+    population_health,
+    preference_satisfaction,
+    resource_resilience,
+    social_welfare,
+    survival_rate,
+    survivor_health,
+    welfare_components,
+)
 from pcds.models import Agent, CommunityState, Policy, RoundResult, SimulationParameters
 from pcds.prolog_rules import PrologRuleEngine
+from pcds.randomness import RANDOMNESS_SCHEME, EnvironmentalDraws, event_rng, sample_environment
 from pcds.scenarios import Scenario, default_scenario_path, load_scenario
 from pcds.voting import (
     VOTING_RULES,
-    approval_vote,
-    expert_delegation_vote,
-    liquid_democracy_vote,
-    majority_vote,
+    VotingOutcome,
+    voting_outcome,
 )
-
-VotingFn = Callable[[list[Agent], nx.DiGraph], Policy]
 
 
 def run_simulation(
     rule: str,
     steps: int = 25,
-    n_agents: int = 40,
+    n_agents: int | None = None,
     seed: int | None = None,
     use_prolog: bool = False,
     scenario: Scenario | str | Path | None = None,
 ) -> list[RoundResult]:
-    """Run one seeded trajectory for a single voting rule."""
+    """Run one mechanism over a fixed number of rounds and retain its full trajectory.
+
+    A seed identifies the initial population and separate random events. An explicit
+    population override applies only to generated members. Representation is measured
+    before effects; survival and material wellbeing are measured afterward.
+    """
     if steps <= 0:
         raise ValueError("steps must be greater than zero")
-    if n_agents <= 0:
+    if n_agents is not None and n_agents <= 0:
         raise ValueError("n_agents must be greater than zero")
 
-    rng = random.Random(seed)
+    # Even an exploratory run gets a recorded root seed so it can be replayed.
+    run_seed = seed if seed is not None else random.SystemRandom().getrandbits(64)
     scenario_obj = _resolve_scenario(scenario, n_agents=n_agents)
-    agents = create_agents_for_scenario(scenario_obj, seed=seed)
-    trust_graph = create_trust_graph_for_scenario(scenario_obj, agents, seed=seed)
+    agents = create_agents_for_scenario(scenario_obj, seed=run_seed)
+    if not agents:
+        raise ValueError("scenario must contain at least one agent")
+    # Names identify both private draws and original ballots; collisions would
+    # silently merge voting power and invalidate its denominator.
+    if len({agent.name for agent in agents}) != len(agents):
+        raise ValueError("agent names must be unique")
+    trust_graph = create_trust_graph_for_scenario(scenario_obj, agents, seed=run_seed)
     state = scenario_obj.resources.model_copy(deep=True)
     parameters = scenario_obj.parameters
+    priors = {agent.name: tuple(agent.preferences) for agent in agents}
+    # Keep the original rankings separately: current rankings change each round.
     prolog = PrologRuleEngine() if use_prolog else None
 
     results: list[RoundResult] = []
 
     for step in range(steps):
+        # A round separates outside conditions, the decision, and its effects.
+        environment = sample_environment(run_seed, step, agents, parameters)
+        preference_changes, assessment_error = update_preferences(
+            agents, state, parameters, priors, run_seed, step
+        )
         # Prolog is optional: when enabled, it receives the current Python world
         # before eligibility and policy-admissibility checks are evaluated.
         if prolog:
             prolog.sync_world(agents, trust_graph, state)
         eligible_agents = prolog.filter_eligible(agents) if prolog else _eligible_agents(agents)
-        selected = _select_policy(rule, eligible_agents, trust_graph)
+        outcome = _select_policy(rule, eligible_agents, trust_graph)
+        selected = outcome.policy
         if prolog and not prolog.allocation_allowed(selected, state):
             selected = _first_allowed_policy(prolog, state)
-        _apply_policy(selected, agents, state, rng, parameters)
-        shock_occurred = _apply_environmental_pressure(agents, state, rng, parameters)
+        # Satisfaction and ballot ownership describe the decision-time
+        # electorate, before effects can kill a voter or change their health.
+        satisfaction = preference_satisfaction(eligible_agents, selected)
+        prior_satisfaction = preference_satisfaction(eligible_agents, selected, priors)
+        power = delegation_power(outcome.representatives)
+        _apply_policy(selected, agents, state, run_seed, step, parameters)
+        shock_occurred = _apply_environmental_pressure(agents, state, environment, parameters)
 
         results.append(
             RoundResult(
@@ -65,10 +107,21 @@ def run_simulation(
                 rule=rule,
                 selected_policy=selected,
                 survival_rate=survival_rate(agents),
-                welfare=social_welfare(agents, state),
+                **_material_metrics(agents, state, parameters),
                 inequality=health_inequality(agents),
                 resources=state.as_dict(),
                 shock_occurred=shock_occurred,
+                preference_changes=preference_changes,
+                mean_assessment_error=assessment_error,
+                simulation_seed=run_seed,
+                environmental_shock_draw=environment.shock_draw,
+                environmental_health_damage=environment.health_damage,
+                eligible_voters=len(eligible_agents),
+                preference_satisfaction=satisfaction,
+                prior_preference_satisfaction=prior_satisfaction,
+                vote_representatives=outcome.representatives,
+                vote_weights=dict(Counter(outcome.representatives.values())),
+                **power,
             )
         )
 
@@ -79,11 +132,15 @@ def compare_rules(
     rules: list[str] | None = None,
     runs: int = 20,
     steps: int = 30,
-    n_agents: int = 40,
+    n_agents: int | None = None,
     seed: int = 42,
     scenario: Scenario | str | Path | None = None,
 ) -> pl.DataFrame:
-    """Run every requested rule over comparable seeds and return final metrics."""
+    """Repeat each rule on the same seed schedule and export final outcomes.
+
+    One row is one rule/seed trajectory, not one member or one round. Paired statistical
+    inference is performed separately by the experiment/CLI pipeline.
+    """
     if runs <= 0:
         raise ValueError("runs must be greater than zero")
 
@@ -92,6 +149,7 @@ def compare_rules(
 
     for rule in rules:
         for run_id in range(runs):
+            # Every rule receives this same trial identity, not a new population.
             run_seed = seed + run_id
             results = run_simulation(
                 rule=rule,
@@ -106,68 +164,160 @@ def compare_rules(
                     "rule": rule,
                     "run_id": run_id,
                     "seed": run_seed,
+                    "initial_population": last.initial_population,
                     "final_survival_rate": last.survival_rate,
                     "final_welfare": last.welfare,
                     "final_inequality": last.inequality,
-                    "final_resilience": resource_resilience(CommunityState(**last.resources)),
+                    "final_resilience": last.resilience,
+                    "final_survivors": last.survivors,
+                    "final_survivor_health": last.survivor_health,
+                    "final_population_health": last.population_health,
+                    "final_eligible_voters": last.eligible_voters,
+                    "final_preference_satisfaction": last.preference_satisfaction,
+                    "final_prior_preference_satisfaction": last.prior_preference_satisfaction,
+                    "final_delegation_concentration": last.delegation_concentration,
+                    "final_max_vote_share": last.max_vote_share,
+                    "final_delegated_vote_share": last.delegated_vote_share,
+                    **{
+                        f"final_welfare_{name}": value
+                        for name, value in last.welfare_sensitivity.items()
+                    },
+                    **{
+                        f"final_welfare_component_{name}": value
+                        for name, value in last.welfare_components.items()
+                    },
                     "final_food": last.resources["food"],
                     "final_water": last.resources["water"],
                     "final_medicine": last.resources["medicine"],
                     "final_energy": last.resources["energy"],
                     "final_security": last.resources["security"],
+                    "final_assessment_error": last.mean_assessment_error,
+                    "total_preference_changes": sum(
+                        result.preference_changes for result in results
+                    ),
+                    "shock_count": sum(result.shock_occurred for result in results),
+                    "environment_trace_digest": _environment_trace_digest(results),
+                    "randomness_scheme": RANDOMNESS_SCHEME,
+                    "metric_schema": METRIC_SCHEMA,
                 }
             )
 
-    return pl.DataFrame(rows)
+    # Entire conditions can lose their electorate. Preserve numeric nullable
+    # types so these conditions can still be concatenated with surviving ones.
+    return pl.DataFrame(rows, schema_overrides={metric: pl.Float64 for metric in NULLABLE_METRICS})
 
 
-def _select_policy(rule: str, agents: list[Agent], trust_graph: nx.DiGraph) -> Policy:
-    if rule == "majority":
-        return majority_vote(agents)
-    if rule == "approval":
-        return approval_vote(agents)
-    if rule == "expert_delegation":
-        return expert_delegation_vote(agents, trust_graph)
-    if rule == "liquid_democracy":
-        return liquid_democracy_vote(agents, trust_graph)
-    raise ValueError(f"Unknown voting rule: {rule}")
+def _select_policy(rule: str, agents: list[Agent], trust_graph: nx.DiGraph) -> VotingOutcome:
+    """Dispatch to a decision rule while preserving its actual ballot-control trace."""
+    return voting_outcome(rule, agents, trust_graph)
+
+
+def _material_metrics(
+    agents: list[Agent], state: CommunityState, parameters: SimulationParameters
+) -> dict:
+    """Measure end-of-round material outcomes and score alternative welfare priorities.
+
+    These reporting choices never alter the decisions or physical random draws.
+    """
+    metric_parameters = parameters.metrics
+    reference = metric_parameters.resource_reference
+    components = welfare_components(agents, state, metric_parameters.welfare_weights, reference)
+    return {
+        "welfare": sum(components.values()),
+        "resilience": resource_resilience(state, reference),
+        "survivors": sum(agent.alive for agent in agents),
+        "initial_population": len(agents),
+        "survivor_health": survivor_health(agents),
+        "population_health": population_health(agents),
+        "welfare_components": components,
+        "welfare_sensitivity": {
+            name: social_welfare(agents, state, weights, reference)
+            for name, weights in WELFARE_PROFILES.items()
+        },
+    }
+
+
+def _environment_trace_digest(results: list[RoundResult]) -> str:
+    # The digest audits external draws, not endogenous health/resources.
+    """Fingerprint only the external draw schedule so paired runs can be checked.
+
+    Different resulting health or stocks are expected and are not included in this check.
+    """
+    trace = [
+        [
+            result.step,
+            result.environmental_shock_draw,
+            result.shock_occurred,
+            result.environmental_health_damage,
+        ]
+        for result in results
+    ]
+    encoded = json.dumps(trace, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
 
 
 def _apply_policy(
     policy: Policy,
     agents: list[Agent],
     state: CommunityState,
-    rng: random.Random,
+    seed: int,
+    step: int,
     parameters: SimulationParameters,
 ) -> None:
+    """Apply the scenario's community-wide stock changes and individual health effects.
+
+    This is the physical model, separate from what members believed before choosing.
+    """
     impact = parameters.policy_impacts[policy]
 
     # Policy impacts update shared resources first; individual health effects
     # are applied afterward so the same decision can affect both the shelter and
     # its members.
     state.energy = max(0.0, state.energy - impact.energy_cost)
-    state.food = max(0.0, state.food + _stochastic_gain(impact.food_delta, rng, policy))
-    state.water = max(0.0, state.water + _stochastic_gain(impact.water_delta, rng, policy))
-    state.medicine = max(0.0, state.medicine + _stochastic_gain(impact.medicine_delta, rng, policy))
+    # Zero is an accounting floor, not a universal affordability check: the
+    # current physical model still applies effects when energy is insufficient.
+    for resource in ("food", "water", "medicine"):
+        delta = getattr(impact, f"{resource}_delta")
+        rng = event_rng(seed, "policy_resource", step, policy.value, resource)
+        setattr(
+            state,
+            resource,
+            max(0.0, getattr(state, resource) + _stochastic_gain(delta, rng, policy)),
+        )
     state.security = max(0.0, state.security + impact.security_delta)
 
     if impact.health_boost > 0:
+        # Treatment currently uses a health threshold, not a medicine budget
+        # or patient-allocation process. That is a stated calibration limitation.
         for agent in agents:
             if agent.alive and agent.health < 0.75:
+                rng = event_rng(seed, "policy_healing", step, policy.value, agent.name)
                 boost = rng.uniform(impact.health_boost * 0.5, impact.health_boost * 1.5)
                 agent.health = min(1.0, agent.health + boost)
 
     for agent in agents:
-        if agent.alive and rng.random() < impact.injury_probability:
-            agent.health = max(0.0, agent.health - rng.uniform(impact.injury_min, impact.injury_max))
+        # Per-agent policy draws preserve the same potential outcome when
+        # another member dies or receives treatment in only one trajectory.
+        if not agent.alive or impact.injury_probability == 0.0:
+            continue
+        rng = event_rng(seed, "policy_injury", step, policy.value, agent.name)
+        if rng.random() < impact.injury_probability:
+            agent.health = max(
+                0.0, agent.health - rng.uniform(impact.injury_min, impact.injury_max)
+            )
 
 
 def _apply_environmental_pressure(
     agents: list[Agent],
     state: CommunityState,
-    rng: random.Random,
+    environment: EnvironmentalDraws,
     parameters: SimulationParameters,
 ) -> bool:
+    """Consume supplies, calculate scarcity, apply shocks, and update survival.
+
+    Scarcity is calculated before shock stock losses; direct shock health damage is
+    applied now, while additional shortage consequences can appear next round.
+    """
     alive_agents = [a for a in agents if a.alive]
     population = len(alive_agents)
 
@@ -187,7 +337,8 @@ def _apply_environmental_pressure(
     if state.security < parameters.low_security_threshold:
         scarcity += parameters.low_security_damage
 
-    shock_occurred = rng.random() < parameters.shock.probability
+    shock_occurred = environment.shock_draw < parameters.shock.probability
+    # Shock losses do not trigger a second scarcity calculation in this round.
     if shock_occurred:
         state.food = max(0.0, state.food - parameters.shock.food_loss)
         state.water = max(0.0, state.water - parameters.shock.water_loss)
@@ -196,7 +347,7 @@ def _apply_environmental_pressure(
         scarcity += parameters.shock.health_damage
 
     for agent in alive_agents:
-        damage = scarcity + rng.uniform(0.0, parameters.random_health_damage_max)
+        damage = scarcity + environment.health_damage[agent.name]
         agent.health = max(0.0, agent.health - damage)
         if agent.health <= parameters.death_threshold:
             agent.alive = False
@@ -204,30 +355,38 @@ def _apply_environmental_pressure(
 
 
 def _eligible_agents(agents: list[Agent]) -> list[Agent]:
+    """Select the living, unsanctioned decision-time electorate."""
     return [a for a in agents if a.alive and not a.sanctioned]
 
 
 def _first_allowed_policy(prolog: PrologRuleEngine, state: CommunityState) -> Policy:
+    """Use the first institutionally allowed policy as a simple replacement.
+
+    This fallback is not a search for the policy with the best expected outcome.
+    """
     for policy in Policy:
         if prolog.allocation_allowed(policy, state):
             return policy
     return Policy.FARMING
 
 
-def _resolve_scenario(scenario: Scenario | str | Path | None, n_agents: int) -> Scenario:
-    if scenario is None:
-        scenario_obj = load_scenario(default_scenario_path())
-        if isinstance(scenario_obj.agents, int):
-            # CLI callers can override the default population size without
-            # mutating the JSON scenario file.
-            scenario_obj.agents = n_agents
-        return scenario_obj
+def _resolve_scenario(scenario: Scenario | str | Path | None, n_agents: int | None) -> Scenario:
+    """Copy or load scenario inputs so overrides do not mutate the caller's scenario."""
     if isinstance(scenario, Scenario):
-        return scenario.model_copy(deep=True)
-    return load_scenario(scenario)
+        scenario_obj = scenario.model_copy(deep=True)
+    else:
+        scenario_obj = load_scenario(default_scenario_path() if scenario is None else scenario)
+    if n_agents is not None:
+        # An explicit override controls synthetic populations; named agents
+        # cannot be resized without changing their authored identities/links.
+        if not isinstance(scenario_obj.agents, int):
+            raise ValueError("n_agents cannot override an explicit agent list")
+        scenario_obj.agents = n_agents
+    return scenario_obj
 
 
 def _stochastic_gain(delta: float, rng: random.Random, policy: Policy) -> float:
+    """Give exploration a variable positive stock gain; other deltas are deterministic."""
     if policy == Policy.EXPLORATION and delta > 0:
         return rng.uniform(0.0, delta * 2.0)
     return delta

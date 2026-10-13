@@ -12,6 +12,7 @@ inductive Policy where
   | exploration
   deriving DecidableEq, Repr
 
+/-- A formal agent has only an identifier; health, roles, and trust are not modeled here. -/
 structure Agent where
   id : Nat
   deriving DecidableEq, Repr
@@ -27,7 +28,7 @@ abbrev Score := Policy -> Nat
 def approves (b : Ballot) (p : Policy) : Prop :=
   b p > 0
 
-/-- A policy weakly dominates another under a score function. -/
+/-- A policy has at least another policy's score; this is not a welfare comparison. -/
 def weaklyDominates (score : Score) (p q : Policy) : Prop :=
   score p >= score q
 
@@ -35,7 +36,10 @@ def weaklyDominates (score : Score) (p q : Policy) : Prop :=
 def isWinner (score : Score) (p : Policy) : Prop :=
   forall q : Policy, weaklyDominates score p q
 
-/-- If a policy's score is at least every other score, then it is a winner by definition. -/
+/--
+This proof unpacks the winner definition: the hypothesis already supplies every
+required comparison. It does not verify Python's tally, tie-breaking, or simulator.
+-/
 theorem winner_of_max_score
     (score : Score)
     (p : Policy)

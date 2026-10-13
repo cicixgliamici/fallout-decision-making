@@ -1,19 +1,48 @@
-# Artifact Checklist
+# Review Checklist
 
-- [x] Installable Python package
-- [x] CLI smoke commands
-- [x] Seeded reproducible experiments
-- [x] Scenario JSON loader
-- [x] Unit tests for voting, metrics, simulation, and governance fallback
-- [x] Optional Prolog governance layer
-- [x] Optional Lean formal core
-- [x] Claims-to-evidence table in README
-- [x] Reproducibility guide
+This checklist separates implementation evidence from research and release work.
+Check marks mean the feature exists and has Python evidence where applicable;
+they do not imply empirical validation or verification of optional backends.
+See [project status](project_status.md) for the dated check and exact configuration.
 
-Smoke test:
+## Implemented and Checked Python Features
+
+- [x] Package metadata and a CLI entry point are declared.
+- [x] CLI smoke commands execute through the Python test harness.
+- [x] Seeded runs can be reproduced.
+- [x] External draws match across rules despite policy and mortality differences.
+- [x] Paired comparisons reject missing/duplicate simulation pairs.
+- [x] Conditional outcomes retain missing values and expose pair coverage.
+- [x] Expertise affects private assessment accuracy; rankings can adapt to needs.
+- [x] Survival, health, satisfaction, and actual ballot control are separated.
+- [x] Welfare contributions, configurable priorities, and sensitivity profiles are exported.
+- [x] Scenarios, metadata, validation results, and reports support reproduction.
+- [x] Plain-language, code-reading, and presentation guides explain the model.
+
+## Present but Requiring Separate Verification
+
+- [ ] Verify actual SWI-Prolog integration and agreement with the intended fallback scope.
+- [ ] Pin and compile the Lean toolchain; state the narrow meaning of its current proofs.
+- [ ] Test package installation and resource discovery outside the source checkout.
+- [ ] Pin or reconstruct a complete environment for an artifact release.
+- [ ] Complete contributor/citation metadata before public publication.
+
+## Research Work Remaining
+
+- [ ] Examine production, consumption, energy, treatment, and scenario viability.
+- [ ] Supply a reviewed bibliography and connect assumptions to the research argument.
+- [ ] Analyze substantive effects, coverage, uncertainty, and representation tradeoffs.
+- [ ] Extend sensitivity beyond the current presets without tuning a preferred rule to win.
+
+## Small Local Check
+
+Run from the repository root after installation:
 
 ```bash
 python -m pytest
 pcds run --steps 2 --agents 8
-pcds compare --steps 2 --runs 2 --agents 8
+pcds compare --steps 2 --runs 2 --agents 8 --output results/smoke.csv
 ```
+
+These short commands verify the pipeline. They do not support a substantive
+mechanism ranking. Longer reproduction commands are in [reproducibility](reproducibility.md).

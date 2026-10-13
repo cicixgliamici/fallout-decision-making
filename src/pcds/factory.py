@@ -1,3 +1,8 @@
+"""Construct community members and possible trust relationships.
+
+Generated populations are synthetic assumptions, not observations of real people.
+"""
+
 from __future__ import annotations
 
 import random
@@ -8,7 +13,6 @@ import numpy as np
 
 from pcds.models import Agent, Policy, Role
 from pcds.scenarios import AgentSpec, Scenario
-
 
 ROLES: list[Role] = [
     Role.DOCTOR,
@@ -32,7 +36,10 @@ def create_agents(
     seed: int | None = None,
     role_distribution: dict[Role, float] | None = None,
 ) -> list[Agent]:
-    """Create a synthetic community with heterogeneous preferences."""
+    """Generate varied members reproducibly from a seed.
+
+    Initial priorities are partly role-correlated; they are not a test of specialist accuracy.
+    """
     rng = random.Random(seed)
     agents: list[Agent] = []
 
@@ -41,7 +48,8 @@ def create_agents(
         prefs = POLICIES.copy()
         rng.shuffle(prefs)
 
-        # Bias agents toward their own domain of expertise.
+        # Initial priorities partly favor the role-related policy. This is a
+        # population assumption, separate from the specialist accuracy advantage.
         expert_policy = {
             Role.FARMER: Policy.FARMING,
             Role.DOCTOR: Policy.MEDICINE,
@@ -68,7 +76,7 @@ def create_agents(
 
 
 def create_agents_from_specs(specs: Iterable[AgentSpec]) -> list[Agent]:
-    """Create agents from explicit scenario data instead of synthetic sampling."""
+    """Build named members, supplying role-based priorities when none are authored."""
     agents: list[Agent] = []
     for spec in specs:
         prefs = spec.preferences or _default_preferences_for_role(spec.role)
@@ -77,6 +85,8 @@ def create_agents_from_specs(specs: Iterable[AgentSpec]) -> list[Agent]:
                 name=spec.name,
                 role=spec.role,
                 health=spec.health,
+                general_accuracy=spec.general_accuracy,
+                expert_accuracy=spec.expert_accuracy,
                 risk_aversion=spec.risk_aversion,
                 cooperation=spec.cooperation,
                 preferences=prefs,
@@ -86,9 +96,11 @@ def create_agents_from_specs(specs: Iterable[AgentSpec]) -> list[Agent]:
 
 
 def create_agents_for_scenario(scenario: Scenario, seed: int | None = None) -> list[Agent]:
-    """Dispatch between synthetic populations and fully specified populations."""
+    """Choose between a generated population and explicitly named members."""
     if isinstance(scenario.agents, int):
-        return create_agents(scenario.agents, seed=seed, role_distribution=scenario.role_distribution)
+        return create_agents(
+            scenario.agents, seed=seed, role_distribution=scenario.role_distribution
+        )
     return create_agents_from_specs(scenario.agents)
 
 
@@ -98,9 +110,9 @@ def create_trust_graph(
     p: float = 0.18,
     topology: str = "expertise_clustered",
 ) -> nx.DiGraph:
-    """Create a directed trust graph among agents.
+    """Generate possible delegation links, with an independent weight on each link.
 
-    Edge A -> B means A trusts B enough to possibly delegate to B.
+    Source trusting target is a directed relationship; it need not be reciprocated.
     """
     rng = random.Random(seed)
     graph = nx.DiGraph()
@@ -115,7 +127,11 @@ def create_trust_graph(
                 continue
             # Expertise-clustered graphs favor agents who share expertise or
             # hold broadly useful coordination roles.
-            same_or_relevant = a.expertise == b.expertise or b.role in {Role.DOCTOR, Role.ENGINEER, Role.ELDER}
+            same_or_relevant = a.expertise == b.expertise or b.role in {
+                Role.DOCTOR,
+                Role.ENGINEER,
+                Role.ELDER,
+            }
             if topology == "sparse":
                 probability = p * 0.45
             elif topology == "dense":
@@ -135,7 +151,10 @@ def create_trust_graph_for_scenario(
     agents: Iterable[Agent],
     seed: int | None = None,
 ) -> nx.DiGraph:
-    """Build a trust graph and then apply any hand-authored scenario edges."""
+    """Generate trust, then add or overwrite any scenario-specified links.
+
+    Supplying explicit edges does not discard other generated relationships.
+    """
     graph = create_trust_graph(
         agents,
         seed=seed,
@@ -144,12 +163,14 @@ def create_trust_graph_for_scenario(
     )
     if scenario.trust_edges is None:
         return graph
+    # Authored links add to the generated network; existing weights are replaced.
     for edge in scenario.trust_edges:
         graph.add_edge(edge.source, edge.target, trust=edge.trust)
     return graph
 
 
 def _sample_role(rng: random.Random, role_distribution: dict[Role, float] | None) -> Role:
+    """Sample relative role weights, using uniform roles if no positive weights exist."""
     if not role_distribution:
         return rng.choice(ROLES)
     roles = list(role_distribution)
@@ -160,6 +181,7 @@ def _sample_role(rng: random.Random, role_distribution: dict[Role, float] | None
 
 
 def _default_preferences_for_role(role: Role) -> list[Policy]:
+    """Supply a simple initial ranking with the role-related policy first."""
     expert_policy = {
         Role.FARMER: Policy.FARMING,
         Role.DOCTOR: Policy.MEDICINE,

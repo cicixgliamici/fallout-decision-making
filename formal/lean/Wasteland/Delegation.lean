@@ -3,8 +3,8 @@ import Wasteland.Basic
 namespace Wasteland
 
 /--
-This file keeps delegation formalism intentionally small: it captures direct
-delegation as a binary relation and states one basic sanity property.
+This file describes a direct relationship between formal agents. It does not
+resolve Python's delegation chains or prove their termination or vote conservation.
 -/
 
 /-- A delegation relation maps one agent to another. -/
@@ -18,7 +18,10 @@ def selfDelegates (R : DelegatesTo) (a : Agent) : Prop :=
 def noDirectSelfDelegation (R : DelegatesTo) : Prop :=
   forall a : Agent, Not (R a a)
 
-/-- If a relation has no direct self-delegation, no agent self-delegates. -/
+/--
+Unpack the no-self-delegation assumption for one agent. This conclusion follows
+from the definition; longer cycles are outside this small statement's scope.
+-/
 theorem no_self_delegates_of_no_direct_self_delegation
     (R : DelegatesTo)
     (h : noDirectSelfDelegation R)

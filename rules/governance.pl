@@ -1,5 +1,5 @@
-% Minimal normative governance rules for MVP 0.
-% These rules are intentionally small and readable.
+% Optional institutional rules: permission to participate or choose a policy.
+% Python handles physical effects and resolves actual delegation chains.
 
 % Dynamic facts are asserted from Python when PySwip is available.
 :- dynamic alive/1.
@@ -9,6 +9,7 @@
 :- dynamic resource/2.
 
 allowed_policy(farming).
+% These thresholds express permission, not a complete resource-feasibility test.
 allowed_policy(medicine).
 allowed_policy(defense) :- resource(energy, E), E >= 2.0.
 allowed_policy(exploration) :-
@@ -21,6 +22,9 @@ eligible_to_vote(A) :-
     alive(A),
     \+ sanctioned(A).
 
+% The delegation predicates below are illustrative declarations. The simulator
+% does not query can_delegate/3, and Python's role map also treats elders as
+% medicine specialists. No full equivalence between these role maps is claimed.
 expert_for(A, medicine) :- role(A, doctor).
 expert_for(A, farming) :- role(A, farmer).
 expert_for(A, defense) :- role(A, guard).

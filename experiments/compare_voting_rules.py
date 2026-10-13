@@ -1,3 +1,8 @@
+"""Illustrate one material index with a standalone welfare chart.
+
+Use pcds suite for paired uncertainty, multiple outcomes, and complete metadata.
+"""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -9,6 +14,7 @@ from pcds.simulation import compare_rules
 
 
 def main() -> None:
+    """Write a supplementary chart, not an overall ranking of institutional quality."""
     output_dir = Path("results")
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -21,6 +27,7 @@ def main() -> None:
     rules = summary["rule"].to_list()
     welfare = summary["final_welfare"].to_list()
 
+    # A welfare-only bar chart cannot show uncertainty or representation tradeoffs.
     plt.figure(figsize=(8, 5))
     plt.bar(rules, welfare)
     plt.title("Mean final welfare by voting rule")

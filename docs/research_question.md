@@ -1,23 +1,45 @@
 # Research Question
 
-This artifact studies:
+The central question is:
 
-> Under scarcity, do delegation-based decision mechanisms improve survival,
-> welfare, and equity compared with direct voting?
+> Under scarcity, when do delegation mechanisms improve survival and health,
+> and what happens to preference satisfaction and concentration of voting power?
 
-The core hypothesis is that delegation can improve outcomes when expertise is
-distributed unevenly and when trust networks reliably connect non-experts to
-experts. The null expectation is that delegation performs no better than direct
-majority or approval voting once scarcity, shocks, and network fragility are
-held constant.
+The project studies that question in a specified model. It does not presume that
+an effective institution is automatically representative, or that dispersed vote
+control is automatically effective. See the [walkthrough](walkthrough.md) for an
+accessible explanation and [metrics](metrics.md) for precise measurements.
 
-The artifact tests this with four mechanisms:
+## Working Hypothesis
 
-1. majority voting
-2. approval voting
-3. expert delegation
-4. simplified liquid democracy
+Delegation may help when information quality differs between members and trust
+links connect voters to useful specialists. It may also redirect decisions away
+from voters' original priorities or concentrate ballot control. Both possibilities
+are measured rather than folded into one unsupported political-quality score.
 
-The post-apocalyptic setting is original worldbuilding used to make scarcity,
-risk, and institutional failure concrete. It does not depend on any third-party
-fictional setting or IP.
+The comparison includes first-choice plurality (`majority` in the CLI), top-two
+approval, expert delegation, and bounded liquid delegation. The suite varies
+scarcity, shocks, trust, and role distribution; fixed-ranking and equal-accuracy
+conditions help examine the contribution of adaptive information.
+
+## What Would Support an Interpretation
+
+Evidence should identify a condition, a metric, a signed paired difference,
+its uncertainty, and its usable seed coverage. A claim about improved conditional
+survivor health must also show survival and population health. A claim about
+representation must include participation and ballot-control information.
+
+An interval or test result does not establish that the assumptions describe a
+real community. The literature-grounded argument, material calibration, and
+substantive analysis remain research work; see [project status](project_status.md).
+
+## Interdisciplinary Scope
+
+The political/social concepts are representation, trust, expertise, scarcity,
+and distribution of outcomes. The computational contribution is making their
+modeled relationships executable and inspectable through algorithms and
+controlled experiments. Strategic behavior, coalition formation, and equilibrium
+analysis are future extensions rather than current game-theory results.
+
+The original post-crisis setting illustrates the problem without requiring a
+third-party fictional universe. It supplies context, not empirical validation.

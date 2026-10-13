@@ -2,7 +2,7 @@ import Lake
 open Lake DSL
 
 package wasteland where
-  -- Minimal Lean4 package for MVP 0.
+  -- This package checks only the small formal definitions, not the Python simulator.
 
 lean_lib Wasteland where
   srcDir := "."
