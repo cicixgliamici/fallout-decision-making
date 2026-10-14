@@ -44,7 +44,12 @@ edge order. With no eligible voters, all rules retain the farming default so
 fixed-length trajectories can still be recorded after extinction.
 
 Results should be reported with raw data, means, confidence intervals, and the
-exact scenario configuration.
+exact scenario configuration. The `stock-budgeted-v2` physics schema identifies
+bounded power generation, action affordability, and stock-budgeted treatment.
+These change physical outcomes and assessments: regenerate older outputs.
+Random event keys and metric definitions are unchanged. Pairing rejects mixed
+physics schemas when that column is supplied; historical files without it must
+be kept separate. See [physical accounting](physical_accounting.md).
 
 The suite adds a fixed-preference baseline and an equal-accuracy comparison to
 the scarcity/network conditions. Equal accuracy sets specialist accuracy to
@@ -88,3 +93,19 @@ seed rows, while effect estimates use pairs defined in both rules and report
 coverage explicitly. Missing simulation pairs remain errors. Interpretation of
 these selected subsets must include all-seed survival/population-health outcomes;
 see [metric definitions](metrics.md).
+
+## Research Design and Evidence Level
+
+The [study protocol](study_protocol.md) states the exploratory comparisons,
+primary outcomes, physical sensitivity ranges, reused seed block, and comparison
+family. It was written after earlier development runs and is not preregistration.
+The [research basis](research_basis.md) distinguishes the literature motivating
+the question from the uncalibrated numerical assumptions. The
+[ODD specification](model_specification.md) makes state, timing, and submodels
+inspectable. None establishes empirical validation or family-wide error control.
+
+The generated report leads with survival percentages, extinction counts,
+population health, and active-versus-inactive execution diagnostics. Its baseline
+figure and paired table use signed differences with confidence intervals and
+coverage; a separate conditional table shows political means and defined-run
+counts. All original numerical CSVs remain available for detailed audit.

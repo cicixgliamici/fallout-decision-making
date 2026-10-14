@@ -1,5 +1,9 @@
 # Reproducibility Guide
 
+Current physical mechanics use `stock-budgeted-v2`; see
+[physical accounting](physical_accounting.md). Old numerical results must be
+regenerated, even when random event keys and scenario filenames match.
+
 Run from the repository root after creating/activating a virtual environment.
 See the [README installation steps](../README.md#install-and-try-it).
 
@@ -16,7 +20,7 @@ Commands:
 python -m pip install -e ".[dev]"
 python -m pytest
 pcds compare --steps 30 --runs 20 --output results/comparison.csv
-pcds suite --steps 40 --runs 100 --output-dir results
+pcds suite --sensitivity --workers 4 --steps 40 --runs 100 --seed 42 --output-dir results/research_review_2026-10-14
 ```
 
 Every simulation accepts a base seed. `compare` records the concrete seed used
@@ -60,3 +64,38 @@ standalone wheel's data-file discovery or establish that optional SWI-Prolog
 and Lean were checked. The Prolog rules path is also relative to the working
 directory, and the Lean toolchain uses a rolling selector. See the
 [review checklist](artifact_checklist.md) for release work still required.
+
+## Current Reviewer Snapshot
+
+The expanded [study protocol](study_protocol.md) uses 100 replications, 14
+conditions, four rules, and 40 cycles (5,600 trajectories). The original eight
+conditions remain the default when `--sensitivity` is omitted. The
+[current-results page](current_results.md) links a retained evidence snapshot.
+
+```bash
+python experiments/prepare_review_snapshot.py results/research_review_2026-10-14 docs/evidence/2026-10-14 --holdout results/research_holdout_2026-10-14
+```
+
+The packaging script checks validation, row counts and current source hashes;
+retains raw outcomes, effects, metadata, figures and checksums; and compresses
+per-seed differences without removing rows. `environment_requirements.txt`
+records installed project/test dependencies for the checked Windows/Python 3.14
+environment. It is not a portable lockfile or evidence of a clean-room install.
+Full configurations and actual local source identities accompany the artifacts;
+an unchanged Git commit alone would not identify uncommitted changes.
+
+`--workers 4` runs independent conditions in separate processes. The default is
+1; tests compare sequential and parallel values and condition ordering. Workers
+share no mutable simulation state and retain the same seed schedule. Metadata
+records the worker count; CSV outputs do not depend on completion order.
+
+The separate baseline seed-block check can be reproduced numerically with:
+
+```bash
+pcds compare --runs 20 --steps 40 --seed 10042 --output results/research_holdout_2026-10-14/holdout_raw.csv
+```
+
+The retained snapshot also contains that block's effects, paired observations,
+and recorded configuration. It is analyzed separately from the main 100-seed
+conditions, with its own bootstrap seed 10042. Twenty seeds provide limited
+precision; a different seed block is not external empirical validation.

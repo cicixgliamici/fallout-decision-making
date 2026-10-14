@@ -68,7 +68,9 @@ def test_expertise_reduces_average_assessment_error(noise_kind):
     parameters = SimulationParameters()
     parameters.decision.observation_noise = 0.6 if noise_kind != "effect" else 0.0
     parameters.decision.effect_noise = 0.6 if noise_kind != "observation" else 0.0
-    context = assessment_context([agent], CommunityState(food=1.0, water=1.0), parameters)
+    # Keep farming affordable while its water debit remains below the reserve
+    # target: this exercises information errors without saturating every effect.
+    context = assessment_context([agent], CommunityState(food=1.0, water=4.0), parameters)
     prior = tuple(agent.preferences)
     reference = assess_policy(
         agent,

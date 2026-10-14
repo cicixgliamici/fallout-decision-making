@@ -8,7 +8,7 @@ from __future__ import annotations
 import random
 from dataclasses import dataclass
 
-from pcds.models import Agent, CommunityState, Policy, SimulationParameters
+from pcds.models import Agent, CommunityState, Policy, PolicyImpact, SimulationParameters
 
 
 @dataclass(frozen=True)
@@ -23,6 +23,7 @@ class AssessmentContext:
     weights: dict[str, float]
     treatable_fraction: float
     health_deficit: float
+    population: int
 
 
 def assessment_context(
@@ -60,6 +61,7 @@ def assessment_context(
         weights=weights,
         treatable_fraction=sum(agent.health < 0.75 for agent in living) / max(1, population),
         health_deficit=sum(1.0 - agent.health for agent in living) / max(1, population),
+        population=population,
     )
 
 
@@ -95,6 +97,11 @@ def assess_policy(
     accuracy = 1.0 if perfect_information else policy_accuracy(agent, policy, parameters)
     uncertainty = 1.0 - accuracy
     impact = parameters.policy_impacts[policy]
+    prior_score = (len(prior) - prior.index(policy)) / len(prior)
+    if not _perceived_affordable(policy, context, parameters, uncertainty, rng):
+        # A failed action has no production or healing benefit. Keep stable
+        # priorities as a tie-breaker when all options appear unavailable.
+        return -1.0 + parameters.decision.preference_weight * prior_score
     effects = {
         "food": impact.food_delta,
         "water": impact.water_delta,
@@ -102,18 +109,14 @@ def assess_policy(
         "security": impact.security_delta,
         "energy": -impact.energy_cost,
     }
-    reserve_gain = _reserve_gain(context, effects, parameters, uncertainty, rng)
-    observation_noise = parameters.decision.observation_noise * uncertainty
     effect_noise = parameters.decision.effect_noise * uncertainty
-    treatable = _bounded_signal(context.treatable_fraction, observation_noise, rng)
-    deficit = _bounded_signal(context.health_deficit, observation_noise, rng)
-    boost = max(0.0, _signal(impact.health_boost, abs(impact.health_boost) * effect_noise, rng))
-    healing = min(deficit, boost * treatable)
+    healing = _expected_healing(impact, context, parameters, uncertainty, rng)
+    effects["medicine"] -= healing * context.population * parameters.treatment_medicine_per_health
+    reserve_gain = _reserve_gain(context, effects, parameters, uncertainty, rng)
     expected_injury = impact.injury_probability * (impact.injury_min + impact.injury_max) / 2.0
     injury = _bounded_signal(expected_injury, expected_injury * effect_noise, rng)
     # Preferences remain a stable prior: the previous round's noisy ranking
     # must not become a new prior and accumulate accidental path dependence.
-    prior_score = (len(prior) - prior.index(policy)) / len(prior)
     communal_weight = 0.5 + 0.5 * agent.cooperation
     # This is a member's perceived policy score, not the welfare reported after
     # consequences occur. The two calculations answer different questions.
@@ -122,6 +125,50 @@ def assess_policy(
         - (1.0 + agent.risk_aversion) * injury
         + parameters.decision.preference_weight * prior_score
     )
+
+
+def _perceived_affordable(
+    policy: Policy,
+    context: AssessmentContext,
+    parameters: SimulationParameters,
+    uncertainty: float,
+    rng: random.Random,
+) -> bool:
+    """Use private stock estimates for planning; the physical gate uses real stocks."""
+    impact = parameters.policy_impacts[policy]
+    for resource, cost in impact.required_inputs().items():
+        if cost <= 0:
+            continue
+        stock = context.resources[resource]
+        scale = max(1.0, stock, context.targets[resource])
+        observed = _signal(
+            stock, scale * parameters.decision.observation_noise * uncertainty, rng
+        )
+        if max(0.0, observed) < cost:
+            return False
+    return True
+
+
+def _expected_healing(
+    impact: PolicyImpact,
+    context: AssessmentContext,
+    parameters: SimulationParameters,
+    uncertainty: float,
+    rng: random.Random,
+) -> float:
+    """Bound aggregate expected healing by estimated post-production medical supply."""
+    observation_noise = parameters.decision.observation_noise * uncertainty
+    effect_noise = parameters.decision.effect_noise * uncertainty
+    treatable = _bounded_signal(context.treatable_fraction, observation_noise, rng)
+    deficit = _bounded_signal(context.health_deficit, observation_noise, rng)
+    boost = max(0.0, _signal(impact.health_boost, abs(impact.health_boost) * effect_noise, rng))
+    scale = max(1.0, context.targets["medicine"], context.resources["medicine"])
+    observed_stock = _signal(context.resources["medicine"], scale * observation_noise, rng)
+    production = _signal(impact.medicine_delta, abs(impact.medicine_delta) * effect_noise, rng)
+    available = max(0.0, observed_stock + production)
+    capacity = available / parameters.treatment_medicine_per_health / max(1, context.population)
+    # This heuristic does not reveal future patient-level draws to voters.
+    return min(deficit, boost * treatable, capacity)
 
 
 def _reserve_gain(

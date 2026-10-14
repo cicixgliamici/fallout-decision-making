@@ -29,10 +29,14 @@ See [project status](project_status.md) for the dated check and exact configurat
 
 ## Research Work Remaining
 
-- [ ] Examine production, consumption, energy, treatment, and scenario viability.
-- [ ] Supply a reviewed bibliography and connect assumptions to the research argument.
-- [ ] Analyze substantive effects, coverage, uncertainty, and representation tradeoffs.
-- [ ] Extend sensitivity beyond the current presets without tuning a preferred rule to win.
+- [x] Add bounded energy generation, atomic input affordability, and stock-budgeted treatment.
+- [ ] Examine sensitivity, empirical plausibility, and scenario viability under these rules.
+- [x] Supply a focused inspected primary-source bibliography and an explicit assumption register.
+- [ ] Extend the literature review and obtain domain-specific empirical grounding.
+- [x] Supply a dated exploratory results discussion with effects, uncertainty, coverage, and representation tradeoffs.
+- [ ] Obtain independent replication and external/domain validation for an applied claim.
+- [x] Declare a one-factor physical sensitivity panel without tuning a preferred rule to win.
+- [ ] Extend sensitivity to interactions, alternative behavioral rules, population sizes, and longer horizons.
 
 ## Small Local Check
 

@@ -8,6 +8,7 @@ from __future__ import annotations
 import json
 import math
 import platform
+from concurrent.futures import ProcessPoolExecutor
 from datetime import UTC, datetime
 from importlib.metadata import version
 from pathlib import Path
@@ -16,7 +17,7 @@ import polars as pl
 
 from pcds.metric_definitions import METRIC_DIRECTIONS, METRIC_SCHEMA, NULLABLE_METRICS
 from pcds.metrics import WELFARE_PROFILES
-from pcds.models import EnvironmentalShock, Role
+from pcds.models import PHYSICS_SCHEMA, EnvironmentalShock, Role
 from pcds.paired_analysis import (
     BOOTSTRAP_RESAMPLES,
     CI_METHOD,
@@ -26,6 +27,8 @@ from pcds.paired_analysis import (
     summarize_paired_effects,
 )
 from pcds.randomness import RANDOMNESS_SCHEME
+from pcds.research_reporting import write_research_report
+from pcds.provenance import source_fingerprints
 from pcds.scenarios import Scenario, load_scenario
 from pcds.simulation import compare_rules
 from pcds.voting import VOTING_RULES
@@ -65,6 +68,17 @@ EXPERIMENTS: dict[str, dict] = {
     },
 }
 
+# These are one-factor stress probes around the authored baseline, not fitted
+# values or a global sensitivity design. Keep the original eight conditions stable.
+SENSITIVITY_EXPERIMENTS: dict[str, dict] = {
+    "energy_zero": {"energy_replenishment": 0.0},
+    "energy_low": {"energy_replenishment": 1.0},
+    "energy_high": {"energy_replenishment": 4.0},
+    "treatment_low_cost": {"treatment_medicine_per_health": 0.5},
+    "treatment_high_cost": {"treatment_medicine_per_health": 2.0},
+    "low_hazard": {"shock_probability": 0.05},
+}
+
 RAW_REQUIRED_COLUMNS: tuple[str, ...] = (
     "experiment",
     "rule",
@@ -86,6 +100,9 @@ RAW_REQUIRED_COLUMNS: tuple[str, ...] = (
     "final_welfare_component_health",
     "final_welfare_component_resources",
     "metric_schema",
+    "physics_schema",
+    "blocked_policy_count",
+    "inactive_cycle_count",
 )
 
 
@@ -95,6 +112,8 @@ def run_experiment_suite(
     runs: int = 100,
     steps: int = 40,
     seed: int = 42,
+    sensitivity: bool = False,
+    workers: int = 1,
 ) -> dict[str, Path]:
     """Run predefined scarcity, information, and trust conditions on matching seeds.
 
@@ -105,18 +124,25 @@ def run_experiment_suite(
         raise ValueError("runs must be greater than zero")
     if steps <= 0:
         raise ValueError("steps must be greater than zero")
+    if workers <= 0:
+        raise ValueError("workers must be greater than zero")
 
     base = load_scenario(scenario_path)
+    conditions = dict(EXPERIMENTS)
+    if sensitivity:
+        conditions.update(SENSITIVITY_EXPERIMENTS)
     output = Path(output_dir)
     output.mkdir(parents=True, exist_ok=True)
 
     raw_frames: list[pl.DataFrame] = []
     summary_frames: list[pl.DataFrame] = []
 
-    for experiment_name, overrides in EXPERIMENTS.items():
-        scenario = _scenario_with_overrides(base, overrides)
-        df = compare_rules(runs=runs, steps=steps, seed=seed, scenario=scenario)
-        df = df.with_columns(pl.lit(experiment_name).alias("experiment"))
+    tasks = [
+        (name, _scenario_with_overrides(base, overrides), runs, steps, seed)
+        for name, overrides in conditions.items()
+    ]
+    for df in _condition_frames(tasks, workers):
+        experiment_name = df["experiment"][0]
         raw_frames.append(df)
         summary_frames.append(
             summarize_rules(df).with_columns(pl.lit(experiment_name).alias("experiment"))
@@ -126,7 +152,9 @@ def run_experiment_suite(
     # Keep one observation per rule and seed until differences are matched.
     # Matching averages instead would lose the shared-trial variation.
     summary = pl.concat(summary_frames)
-    validation = validate_experiment_outputs(raw, summary, runs=runs, steps=steps)
+    validation = validate_experiment_outputs(
+        raw, summary, runs=runs, steps=steps, experiment_names=set(conditions)
+    )
     if not validation["passed"]:
         raise ValueError("Invalid experiment outputs: " + "; ".join(validation["errors"]))
     paired = build_paired_differences(raw)
@@ -155,6 +183,13 @@ def run_experiment_suite(
                 "seed": seed,
                 "randomness_scheme": RANDOMNESS_SCHEME,
                 "metric_schema": METRIC_SCHEMA,
+                "physics_schema": PHYSICS_SCHEMA,
+                "source_sha256": source_fingerprints(),
+                "sensitivity": sensitivity,
+                "workers": workers,
+                "study_scope": "exploratory; no empirical parameter calibration",
+                "primary_metrics": ["final_survival_rate", "final_population_health"],
+                "sensitivity_design": "one factor at a time; interactions not estimated",
                 "metric_directions": METRIC_DIRECTIONS,
                 "conditional_metrics": sorted(NULLABLE_METRICS),
                 "conditional_estimand": "mean difference among seed pairs defined in both rules",
@@ -178,18 +213,18 @@ def run_experiment_suite(
                     "bootstrap_resamples": BOOTSTRAP_RESAMPLES,
                     "bootstrap_seed": seed,
                 },
-                "experiments": list(EXPERIMENTS),
+                "experiments": list(conditions),
                 "scenario_configuration": base.model_dump(mode="json"),
                 "experiment_configurations": {
                     name: _scenario_with_overrides(base, overrides).model_dump(mode="json")
-                    for name, overrides in EXPERIMENTS.items()
+                    for name, overrides in conditions.items()
                 },
             },
             indent=2,
         ),
         encoding="utf-8",
     )
-    report_path.write_text(_markdown_report(summary, effects, validation), encoding="utf-8")
+    write_research_report(raw, summary, effects, validation, output)
 
     return {
         "raw": raw_path,
@@ -202,11 +237,30 @@ def run_experiment_suite(
     }
 
 
+def _run_condition(task: tuple[str, Scenario, int, int, int]) -> pl.DataFrame:
+    """Keep a condition independent so parallel execution cannot share mutable state."""
+    name, scenario, runs, steps, seed = task
+    frame = compare_rules(runs=runs, steps=steps, seed=seed, scenario=scenario)
+    return frame.with_columns(pl.lit(name).alias("experiment"))
+
+
+def _condition_frames(tasks: list[tuple], workers: int):
+    """Retain declared condition order regardless of process completion order."""
+    if workers == 1:
+        yield from map(_run_condition, tasks)
+    else:
+        # Processes provide CPU parallelism without changing seed ownership.
+        # executor.map preserves input order, keeping exports deterministic.
+        with ProcessPoolExecutor(max_workers=min(workers, len(tasks))) as executor:
+            yield from executor.map(_run_condition, tasks)
+
+
 def validate_experiment_outputs(
     raw: pl.DataFrame,
     summary: pl.DataFrame,
     runs: int,
     steps: int,
+    experiment_names: set[str] | None = None,
 ) -> dict:
     """Check coverage, pairing, numeric bounds, and outcome-population consistency.
 
@@ -215,7 +269,7 @@ def validate_experiment_outputs(
     errors: list[str] = []
     warnings: list[str] = []
 
-    expected_experiments = set(EXPERIMENTS)
+    expected_experiments = set(EXPERIMENTS) if experiment_names is None else experiment_names
     expected_rules = set(VOTING_RULES)
     expected_raw_rows = len(expected_experiments) * len(expected_rules) * runs
     expected_summary_rows = len(expected_experiments) * len(expected_rules)
@@ -230,6 +284,8 @@ def validate_experiment_outputs(
         errors.append("raw output uses an unsupported randomness scheme")
     if "metric_schema" in raw.columns and set(raw["metric_schema"].to_list()) != {METRIC_SCHEMA}:
         errors.append("raw output uses an unsupported metric schema")
+    if "physics_schema" in raw.columns and set(raw["physics_schema"].to_list()) != {PHYSICS_SCHEMA}:
+        errors.append("raw output uses an unsupported physics schema")
 
     summary_required = {"experiment", "rule"} | {
         column
@@ -306,6 +362,8 @@ def validate_experiment_outputs(
             required_intervals = summary.filter(pl.col(count_column) >= 2)
             _require_range(required_intervals, column, lower=0.0, upper=None, errors=errors)
     _require_range(raw, "shock_count", lower=0.0, upper=float(steps), errors=errors)
+    for column in ("blocked_policy_count", "inactive_cycle_count"):
+        _require_range(raw, column, lower=0.0, upper=float(steps), errors=errors)
     errors.extend(_population_metric_errors(raw))
 
     if runs < 20:
@@ -392,6 +450,8 @@ def _scenario_with_overrides(base: Scenario, overrides: dict) -> Scenario:
         # controls while keeping the base scenario intact for the next run.
         if key == "decision_mode":
             scenario.parameters.decision.mode = value
+        elif key == "shock_probability":
+            scenario.parameters.shock.probability = value
         elif key == "equal_accuracy":
             # Remove the specialist advantage without changing trust or roles.
             scenario.parameters.decision.expert_accuracy = (
@@ -438,70 +498,6 @@ def summarize_rules(df: pl.DataFrame) -> pl.DataFrame:
             descending=[True, False],
         )
     )
-
-
-def _markdown_report(summary: pl.DataFrame, effects: pl.DataFrame, validation: dict) -> str:
-    """Build an English report that keeps material outcomes, representation, and coverage visible."""
-    validation_status = "PASS" if validation["passed"] else "FAIL"
-    lines = [
-        "# Experiment Suite Report",
-        "",
-        "Each row reports rule-level means and approximate 95% confidence intervals.",
-        "Effects use matched experiment/run/seed differences with approximate 95% percentile bootstrap intervals (2,000 resamples).",
-        "Intervals are unavailable with fewer than two defined pairs. Metric directions are recorded in `preferred_direction`; delegated vote share is descriptive.",
-        "Conditional outcomes are undefined without survivors/voters. Effects report `n_pairs`, `n_seed_pairs`, and `n_undefined_pairs`; conditional estimates concern only pairs defined in both rules.",
-        "Read survival, health, satisfaction, and ballot concentration together. Low health dispersion or low concentration alone cannot establish a good outcome.",
-        "Welfare weights express normative priorities. Contributions and three prespecified sensitivity profiles are exported separately; satisfaction and power are not folded into the index.",
-        "",
-        f"Validation status: **{validation_status}**",
-        "",
-        "## Outcome Dashboard",
-        "",
-        _outcome_dashboard(summary),
-        "",
-        "## Summary",
-        "",
-        "```csv\n" + summary.write_csv() + "```",
-        "",
-        "## Paired Effects vs Majority Baseline",
-        "",
-        "```csv\n" + effects.write_csv() + "```",
-        "",
-        "Per-seed differences are stored in `suite_paired_differences.csv`.",
-        "These intervals describe sampling uncertainty within the model, not validity of its assumptions or simultaneous coverage across comparisons.",
-        "",
-        "## Validation",
-        "",
-        "```json\n" + json.dumps(validation, indent=2) + "\n```",
-    ]
-    return "\n".join(lines)
-
-
-def _outcome_dashboard(summary: pl.DataFrame) -> str:
-    """Present related outcomes side by side, including counts for conditional means."""
-    columns = [
-        "final_survival_rate",
-        "final_population_health",
-        "final_survivor_health",
-        "final_preference_satisfaction",
-        "final_prior_preference_satisfaction",
-        "final_delegation_concentration",
-        "final_welfare",
-    ]
-    lines = [
-        "| Experiment | Rule | Survival | Population health | Survivor health (n) | Current satisfaction (n) | Initial satisfaction (n) | Concentration (n) | Welfare |",
-        "| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
-    ]
-    for row in summary.sort(["experiment", "rule"]).iter_rows(named=True):
-        cells = [row["experiment"], row["rule"]]
-        for metric in columns:
-            value = row[f"mean_{metric}"]
-            cell = "N/A" if value is None else f"{value:.3f}"
-            if metric in NULLABLE_METRICS:
-                cell += f" ({row[f'n_{metric}']})"
-            cells.append(cell)
-        lines.append("| " + " | ".join(cells) + " |")
-    return "\n".join(lines)
 
 
 def _require_range(

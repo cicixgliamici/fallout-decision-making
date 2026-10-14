@@ -23,6 +23,16 @@ An underscore at the start of a function name marks an internal helper.
 separate. `models.py` uses Pydantic to read typed data and check declared bounds;
 that validation does not establish that assumptions are realistic.
 
+## Physical Budgets
+
+In `simulation.py`, `_replenish_energy` runs before assessments.
+`_policy_block_reason` checks the inputs returned by `PolicyImpact.required_inputs`
+before `_apply_policy` mutates any stock. `_apply_treatment` caps requests,
+shares available medicine proportionally, and records actual expenditure.
+`RoundResult.policy_executed` and `policy_block_reason` distinguish a selection
+from successful execution. See [physical accounting](physical_accounting.md)
+for the ordering, parameter rationale, and a runnable example.
+
 ## From Trajectories to Comparisons
 
 [compare_rules](../src/pcds/simulation.py) runs the mechanisms using the same seed

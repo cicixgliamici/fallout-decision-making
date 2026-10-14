@@ -73,6 +73,9 @@ def _print_run_summary(last: RoundResult) -> None:
     """Keep the established terminal summary separate from optional artifacts."""
     typer.echo(f"Rule: {last.rule}")
     typer.echo(f"Selected policy at final step: {last.selected_policy.value}")
+    typer.echo(f"Policy executed: {last.policy_executed}")
+    if last.policy_block_reason:
+        typer.echo(f"Policy blocked: {last.policy_block_reason}")
     typer.echo(f"Survival rate: {last.survival_rate:.3f}")
     typer.echo(f"Welfare: {last.welfare:.3f}")
     typer.echo(f"Inequality: {last.inequality:.3f}")
@@ -144,6 +147,8 @@ def suite(
     runs: int = typer.Option(100, help="Runs per voting rule and experiment."),
     steps: int = typer.Option(40, help="Steps per run."),
     seed: int = typer.Option(42, help="Base random seed."),
+    sensitivity: bool = typer.Option(False, help="Add six physical-assumption sensitivity probes."),
+    workers: int = typer.Option(1, min=1, help="Independent worker processes for suite conditions."),
 ) -> None:
     """Run all predefined conditions and report where their review artifacts were written."""
     paths = run_experiment_suite(
@@ -152,6 +157,8 @@ def suite(
         runs=runs,
         steps=steps,
         seed=seed,
+        sensitivity=sensitivity,
+        workers=workers,
     )
     for label, path in paths.items():
         typer.echo(f"{label}: {path}")

@@ -1,6 +1,9 @@
 # Presentation Guide
 
-Use this guide to explain the project before showing detailed equations or code.
+Start with the [dated results and discussion](current_results.md), then use
+this guide to explain the project before showing detailed equations or code.
+The [assumption register](research_basis.md) and [ODD specification](model_specification.md)
+provide the methodological argument behind the demonstration.
 The [walkthrough](walkthrough.md) explains the process; [project status](project_status.md)
 provides the evidence and remaining work behind the claims below.
 
@@ -73,8 +76,9 @@ visible beside it.
 
 **Interdisciplinarity.** The substantive concepts are representation, trust,
 expertise, and distribution of outcomes. Algorithms and controlled simulation
-make their consequences inspectable. A literature-based argument and further
-calibration are still required to turn this into a completed scientific study.
+make their consequences inspectable. A focused primary-source argument is now supplied in
+[research basis](research_basis.md). Empirical calibration and broader independent
+validation are still required before claiming an applied scientific study.
 
 ## Claims to Avoid
 
@@ -86,3 +90,14 @@ dispersion value without participation, survival, and health information.
 The strongest current claim is specific: the implementation compares simplified
 decision mechanisms under explicit assumptions, records their material and
 representational consequences, and makes the comparisons reproducible.
+
+## A Defensible Results Slide
+
+Show the baseline paired-effect chart from the retained evidence snapshot.
+Name the comparison (rule minus plurality), the horizon and seeds, the unit
+(survival percentage points), and the defined/total pair count. Explain one
+interval that crosses zero before discussing any interval that excludes it.
+Then show condition dependence on the survival heatmap and point out the
+mortality context. Do not present political means among a depleted electorate
+as population-wide legitimacy. The [current results](current_results.md) gives
+specific numbers and a candid interpretation for this version.

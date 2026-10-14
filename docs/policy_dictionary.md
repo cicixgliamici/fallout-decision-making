@@ -20,7 +20,11 @@ scenario can configure different effects for the same identifiers.
 
 Reserve changes and energy costs are community-wide abstract units per selected
 action. Positive exploration gains are independently drawn from uniform ranges;
-the three realized amounts need not move together. Stocks are floored at zero.
+the three realized amounts need not move together. Every policy requires its
+energy cost and any negative resource deltas in full before execution. Insufficient
+inputs block all policy effects. Routine consumption and shock losses retain zero floors.
+Routine power adds up to 2 energy per inhabited cycle, capped at 50; see
+[physical accounting](physical_accounting.md).
 Security is a readiness counter, not a count of armed residents.
 
 ## `farming`: Hydroponic Production and Water Recovery
@@ -47,16 +51,18 @@ Farmers are the model's specialists for this policy.
 residents whose health has fallen below the treatment threshold.
 
 The policy adds 8 medicine and deducts 2 energy. Each living resident whose
-health is strictly below 0.75 receives a sampled boost between 0.04 and 0.12,
-with final health capped at 1. The baseline boost parameter is 0.08.
+health is strictly below 0.75 requests a sampled boost between 0.04 and 0.12,
+with final health capped at 1. The baseline boost parameter is 0.08. Requests
+are proportionally reduced if the post-production medical stock is insufficient;
+one medicine unit pays for one summed health point in the baseline.
 Treatment happens before the cycle's environmental damage; improved health
 does not guarantee survival through that damage.
 
 The supply increase represents an abstract medical-support allocation. It is
 not recovery from an outside delivery or a modeled pharmaceutical factory.
-The current implementation does not debit a medicine dose for each treatment
-or prevent healing at zero medicine stock. Routine per-resident medicine use
-is accounted for separately.
+Actual health recovery debits medical stock, including supply produced in this
+cycle. Zero post-production stock means no healing. Routine per-resident
+medicine use is accounted for separately after treatment.
 
 **Choice it exposes:** Health support competes with food/water recovery.
 Repeated treatment can keep residents alive while essential reserves decline.
@@ -74,8 +80,8 @@ Improving readiness can avoid that penalty when it raises security sufficiently.
 
 This does not reduce shock probability or automatically prevent shock losses.
 Combat, hostile factions, airlock repairs, and individual guard assignments are
-not simulated. The optional institutional checks also do not make energy cost
-universally affordable: the physical engine floors depleted energy at zero.
+not simulated. The physical affordability gate requires all 4 energy units
+regardless of whether optional institutional checks are enabled.
 
 **Choice it exposes:** Readiness uses the largest policy energy cost and adds
 neither food/water nor treatment. Guards and engineers are the model's
@@ -98,7 +104,8 @@ invent a named injured explorer from these aggregate results.
 
 With optional governance checks enabled, exploration may be disallowed when
 security is below 15 or energy below 2. Those restrictions do not apply to
-ordinary runs without the optional checks. See [governance rules](rules.md).
+ordinary runs without the optional checks, except that the physical energy
+cost must always be affordable. See [governance rules](rules.md).
 
 **Choice it exposes:** Exploration can replenish several reserves at once,
 but its water and food returns are less predictable than hydroponic production
@@ -110,8 +117,8 @@ and it introduces direct injury risk. It does not supply energy or healing.
 | --- | --- | --- |
 | `food` | Shared edible reserve | Net consumption; no individual ration allocation. |
 | `water` | Shared usable-water reserve | Recovery is bundled into farming; no purity or radiation variable. |
-| `medicine` | Shared medical reserve | Routine consumption; treatment is not dose-budgeted. |
-| `energy` | Available operating reserve | Policy expenditure; no modeled reactor output or universal affordability gate. |
+| `medicine` | Shared medical reserve | Routine consumption plus stock-budgeted treatment proportional to actual healing. |
+| `energy` | Available operating reserve | Bounded routine generation and upfront policy expenditure; no fuel/maintenance model. |
 | `security` | Aggregate protective readiness | Policy gains and shock losses; no routine per-resident consumption. |
 
 ## Reuse Contract

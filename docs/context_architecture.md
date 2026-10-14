@@ -88,11 +88,11 @@ different explanatory questions.
 
 ## Improve Mechanics Through the Scenario Boundary
 
-The next useful physical extension is explicit energy replenishment and action
-affordability, followed by stock-budgeted treatment. These close existing
-accounting gaps and give the colony's infrastructure real consequences.
-Define them neutrally in the engine; describe them as reactor output and
-infirmary allocation in the Vault profile.
+Bounded routine energy replenishment, universal action affordability, and
+stock-budgeted treatment are implemented; see [physical accounting](physical_accounting.md).
+Their effects are neutral resource transactions and explicit blocked-action
+records, independent of the report profile. Reactor and infirmary labels are
+presentation, not extra infrastructure mechanics.
 
 Only afterward introduce specific infrastructure failures with declared effects,
 such as reduced water recovery. Mechanical events belong in scenario dynamics;
@@ -109,8 +109,9 @@ tested behavioral rule.
 3. Completed: show the same run as a Vault report and a neutral report; verify identical
    simulation data with either profile or with narration disabled.
 4. Completed: neutral, ordered event records with actual state changes.
-5. Proposed: extend physical accounting and then specific incidents, keeping profile
-   changes independent from mechanical configuration changes.
+5. Completed: bounded energy generation, upfront action costs, and stock-budgeted treatment.
+6. Proposed: specific infrastructure incidents, keeping profile changes independent
+   from mechanical configuration changes.
 
 This creates one inspectable experiment with two readings: a colony's history
 and the computational evidence behind it. No TUI, work-shift system, or large

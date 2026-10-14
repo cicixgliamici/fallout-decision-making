@@ -68,7 +68,15 @@ def test_policy_draws_for_survivor_ignore_other_agents(policy):
     _apply_policy(policy, [other, target], shared_state, 42, 3, parameters)
     _apply_policy(policy, [isolated], isolated_state, 42, 3, parameters)
     assert target.health == isolated.health
-    assert shared_state == isolated_state
+    # Individual potential healing draws stay fixed; treating an additional
+    # resident now correctly spends additional shared medical stock.
+    assert shared_state.model_dump(exclude={"medicine"}) == isolated_state.model_dump(
+        exclude={"medicine"}
+    )
+    if policy == Policy.MEDICINE:
+        assert isolated_state.medicine - shared_state.medicine == pytest.approx(other.health - 0.4)
+    else:
+        assert shared_state.medicine == isolated_state.medicine
 
 
 def test_compare_records_matching_environment_digests():

@@ -78,6 +78,9 @@
         "injury_min": 0.08,
         "injury_max": 0.2
       }
-    }
+    },
+    "energy_replenishment": 2.0,
+    "energy_capacity": 50.0,
+    "treatment_medicine_per_health": 1.0
   }
 }

@@ -45,8 +45,13 @@ With four policies the scores are 1, 2/3, 1/3, and 0. This explicitly assumes
 equal reporting distances between ranks. It is an ordinal congruence indicator,
 not a measurement of comparable psychological utilities or realized happiness.
 Current rankings reflect private information; original rankings preserve stable
-personal priorities. The implemented policy is evaluated, including any policy
-replacement imposed by governance constraints. With no eligible voters both
+personal priorities. The selected policy is evaluated, including any policy
+replacement imposed by governance constraints. A physical budget failure does
+not change that selection: satisfaction can be high even when execution fails.
+Read `policy_executed`, `policy_block_reason`, and `blocked_policy_count` beside
+this congruence measure; it does not measure successful delivery.
+`blocked_policy_count` counts unaffordable actions; `inactive_cycle_count`
+separately counts post-extinction recording cycles. With no eligible voters both
 satisfaction measures are undefined, not zero or perfect agreement.
 
 ## Delegation Power

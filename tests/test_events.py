@@ -76,13 +76,14 @@ def _medical_scenario():
 
 def test_floors_treatment_and_extinction_do_not_invent_residents_or_losses():
     scenario = _medical_scenario()
-    scenario.resources.energy = 1.0
+    scenario.resources.energy = 2.0
+    scenario.parameters.energy_replenishment = 0.0
     scenario.parameters.shock.probability = 1.0
     scenario.parameters.shock.health_damage = 1.0
     results = run_simulation("majority", steps=3, seed=42, scenario=scenario, record_events=True)
     first = results[0].events
     energy = next(e for e in first if e.kind == "resource_change" and e.subject == "energy")
-    assert (energy.before, energy.after, energy.requested_change) == (1.0, 0.0, -2.0)
+    assert (energy.before, energy.after, energy.requested_change) == (2.0, 0.0, -2.0)
     assert {e.subject for e in first if e.kind == "treatment"} == {"alice", "bob"}
     assert {e.subject for e in first if e.kind == "death"} == {"alice", "bob"}
     for result in results[1:]:
@@ -92,7 +93,7 @@ def test_floors_treatment_and_extinction_do_not_invent_residents_or_losses():
             for e in result.events
         )
     report = render_report(results, PROFILES["vault47"])
-    assert "energy -1.000 (requested -2.000)" in report
+    assert "energy -2.000" in report
     assert "no eligible voters" in report and "Survivor health: N/A" in report
     assert report.count("Deaths: alice, bob") == 1
     assert report.index("Treatment:") < report.index("Consumption:")
@@ -194,7 +195,10 @@ def test_institutional_override_preserves_both_requested_and_applied_policy(monk
         use_prolog=True,
         record_events=True,
     )
-    selection, override = results[0].events[:2]
+    selection, override = [
+        event for event in results[0].events
+        if event.kind in {"policy_selected", "policy_override"}
+    ]
     assert selection.subject == "medicine"
     assert override.kind == "policy_override" and override.subject == "farming"
     assert override.cause == "medicine"

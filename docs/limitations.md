@@ -15,10 +15,13 @@ assumptions, not empirically calibrated recycling rates. As members die,
 consumption falls; mortality therefore still changes the later budget.
 
 Policy effects, consumption, and health damage are assumed rather than fitted
-to empirical observations. Energy has no current replenishing policy, costs are
-floored at zero rather than universally blocking action, and medicine's healing
-is not conditioned on a stock budget or patient-level allocation. These are
-modeling limitations, not evidence that a real institution would fail similarly.
+to empirical observations. Energy now has bounded routine replenishment and
+policy costs block unaffordable actions. Healing spends medicine in proportion
+to actual recovery, with proportional rationing. Generation has no fuel or
+maintenance model; the treatment threshold and medicine conversion are assumed,
+not clinical estimates. Routine consumption is distinct from treatment spending
+and still uses floors and shortage penalties. See [physical accounting](physical_accounting.md).
+These are modeling choices, not evidence that a real institution would behave similarly.
 
 ## Information and Social Behavior Are Simplified
 
@@ -26,7 +29,9 @@ Information errors and specialist accuracy are assumed. Members use a stock,
 healing, risk, and priority heuristic rather than an optimal or Bayesian planner.
 Population and consumption settings are known; stocks and health summaries are
 noisy. Policy-specific errors are independent, so correlated misinformation is
-absent. Members do not foresee individual shocks or realized exploration gains.
+absent. Stock signals are resampled across scoring subcalculations rather than
+maintained as one coherent posterior belief. Members do not foresee individual
+shocks or realized exploration gains.
 
 Trust does not learn or update, strategic manipulation and coalitions are not
 implemented, and sanctions have no endogenous update process. Generated initial
@@ -62,5 +67,7 @@ definitions, not simulator correctness. See [governance scope](rules.md).
 
 Dependencies are not fully pinned, the Lean selector is rolling, and resource
 paths assume a source checkout. Installation away from the checkout and complete
-public-release metadata still need review. A reviewed bibliography and a developed
-substantive research analysis have not yet been supplied.
+public-release metadata still need review. A focused [primary-source bibliography and assumption register](research_basis.md)
+and [substantive results discussion](current_results.md) are now supplied.
+This is not an exhaustive systematic review. Empirical validation, global
+sensitivity/interaction analysis, and independent confirmation remain absent.

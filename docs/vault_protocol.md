@@ -105,9 +105,9 @@ independent seed checks, and assumptions.
 Generic shocks remove reserves and damage health; they do not identify a
 particular broken purifier, raider attack, or radiation event. Specific causes
 require additional modeled events before they can be reported as facts.
-Energy currently has no replenishment or universal affordability gate; healing
-is not constrained by a patient-level medicine budget. The protocol does not
-claim that these systems already provide complete physical accounting.
+Bounded routine power generation, upfront affordability checks, and proportional
+stock-budgeted care are implemented; see [physical accounting](physical_accounting.md).
+Fuel, maintenance, and clinical treatment protocols are not simulated.
 
 The fictional premise is original and Fallout-inspired. Lunar colonies are a
 parallel motivation, not an implemented spaceflight model or a claim about

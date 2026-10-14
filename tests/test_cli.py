@@ -37,11 +37,12 @@ def test_cli_exports_replayable_event_log_and_deterministic_report(tmp_path):
     assert result.exit_code == 0, result.output
     text, data = report.read_bytes(), log.read_bytes()
     payload = json.loads(data)
-    assert payload["event_schema"] == "simulation-events-v1"
+    assert payload["event_schema"] == "simulation-events-v2"
     assert payload["scenario_configuration"]["agents"] == 5
     assert payload["governance_checks_enabled"] is False
     assert len(payload["rounds"]) == 3
-    assert payload["rounds"][0]["events"][0]["kind"] == "policy_selected"
+    assert any(e["kind"] == "policy_selected" for e in payload["rounds"][0]["events"])
+    assert payload["physics_schema"] == "stock-budgeted-v2"
     assert b"VAULT 47" in text
     assert runner.invoke(app, arguments).exit_code == 0
     assert report.read_bytes() == text and log.read_bytes() == data
@@ -131,3 +132,19 @@ def test_cli_preserves_custom_scenario_population(tmp_path):
 def test_cli_rejects_non_positive_population(command):
     result = CliRunner().invoke(app, [command, "--agents", "0"])
     assert result.exit_code == 2
+
+
+def test_cli_suite_forwards_the_optional_sensitivity_panel(monkeypatch, tmp_path):
+    received = {}
+
+    def capture_suite(**arguments):
+        # Isolate command wiring; actual condition construction is tested separately.
+        received.update(arguments)
+        return {}
+
+    monkeypatch.setattr("pcds.cli.run_experiment_suite", capture_suite)
+    result = CliRunner().invoke(app, ["suite", "--sensitivity", "--output-dir", str(tmp_path)])
+    assert result.exit_code == 0, result.output
+    assert received["sensitivity"] is True
+    assert received["workers"] == 1
+    assert received["output_dir"] == tmp_path

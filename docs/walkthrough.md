@@ -42,15 +42,19 @@ round, so it cannot address every need at once.
 
 ```mermaid
 flowchart TD
-    A[Current members, health, and stocks] --> B[Private estimates and updated rankings]
+    A[Current members, health, and stocks] --> R[Bounded routine power generation]
+    R --> B[Private estimates and updated rankings]
     B --> C[Eligibility and direct voting or delegation]
     C --> D[Optional institutional policy check]
     D --> E[Record preference satisfaction and ballot ownership]
-    E --> F[Apply policy effects]
+    E --> F[Check all inputs; apply affordable policy or record failure]
     F --> G[Consume resources and apply external pressure]
     G --> H[Record survival, health, resources, and welfare]
     H --> A
 ```
+
+At the start of each inhabited cycle, routine generation adds up to 2 energy
+units, limited by a capacity of 50 in the baseline.
 
 1. **Observe imperfectly.** Members estimate stocks and expected policy effects.
    Their estimates can be wrong. Under default settings, a farmer makes smaller
@@ -68,8 +72,11 @@ flowchart TD
    replaced if institutional constraints prohibit it. The first allowed policy
    in declaration order is used; this is a simple fallback, not an optimal repair.
 5. **Separate decision and outcome.** Satisfaction and ballot ownership are
-   recorded before policy effects. Stocks and health then change, consumption
-   occurs, and external pressure can cause deaths. Material outcomes are
+   recorded before policy effects. An unaffordable action is recorded but has
+   no policy effects. An affordable action pays its inputs, produces supplies,
+   and can treat residents using available medicine. Limited medicine reduces
+   all requested treatments proportionally. Consumption then occurs, and
+   external pressure can cause deaths. Material outcomes are
    recorded afterward.
 
 Scarcity penalties are calculated after consumption and before shock resource

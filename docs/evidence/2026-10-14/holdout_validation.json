@@ -1,0 +1,22 @@
+{
+  "passed": true,
+  "errors": [],
+  "warnings": [],
+  "checks": {
+    "expected_raw_rows": 80,
+    "observed_raw_rows": 80,
+    "expected_summary_rows": 4,
+    "observed_summary_rows": 4,
+    "experiments": [
+      "baseline_holdout"
+    ],
+    "rules": [
+      "approval",
+      "expert_delegation",
+      "liquid_democracy",
+      "majority"
+    ],
+    "runs": 20,
+    "steps": 40
+  }
+}

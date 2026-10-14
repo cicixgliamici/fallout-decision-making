@@ -30,17 +30,21 @@ predictions about real communities.
 
 ## Start Reading Here
 
-| Your purpose | Recommended document |
+The [documentation index](docs/README.md) provides separate reading paths for
+users, reviewers, and technical contributors.
+
+| Your purpose | Start here |
 | --- | --- |
-| Enter the Vault setting and understand its choices | [Experiment protocol](docs/vault_protocol.md), [policy dictionary](docs/policy_dictionary.md) |
-| Follow a simulated colony's decisions and incidents | [Deterministic reports and event records](docs/event_reports.md) |
-| Understand the project without reading code | [Plain-language walkthrough](docs/walkthrough.md) |
-| Explain it to a reviewer or admissions board | [Presentation guide](docs/presentation_guide.md) |
-| See what is ready and what still needs work | [Project status](docs/project_status.md) |
-| Follow the implementation | [Code reading guide](docs/code_guide.md) |
-| Understand terms such as seed, bootstrap, and concentration | [Glossary](docs/glossary.md) |
-| Examine the assumptions and measurements | [Model](docs/model.md), [metrics](docs/metrics.md), [methods](docs/methods.md) |
-| Run and reproduce experiments | [Reproducibility](docs/reproducibility.md), [experiment outputs](docs/experiments.md) |
+| Understand what a simulation does | [Plain-language walkthrough](docs/walkthrough.md) |
+| Read current findings and uncertainty | [Current results](docs/current_results.md) |
+| Assess current progress and evidence | [Project status](docs/project_status.md) |
+| Examine the research argument | [Assumption register and bibliography](docs/research_basis.md), [study protocol](docs/study_protocol.md) |
+| Present the project to a board | [Presentation guide](docs/presentation_guide.md) |
+| Follow the implementation | [Code guide](docs/code_guide.md) |
+| Plan extensions | [Development roadmap](docs/roadmap.md) |
+
+AI coding instructions live in [AGENTS.md](AGENTS.md); they are separate from
+reader-facing documentation and the [narrative design](Setting.md).
 
 ## Research Question
 
@@ -55,11 +59,13 @@ results. See [research question](docs/research_question.md).
 
 ## What Happens in One Round
 
-1. Members estimate current needs and policy effects using imperfect information.
+1. Routine power replenishes available energy. Members then estimate current
+   needs and policy effects using imperfect information.
 2. They update their policy rankings; specialists usually have more accurate
    estimates in their own domain under the default settings.
 3. Eligible members vote directly or delegate according to the selected rule.
-4. The chosen policy changes stocks and health. Consumption and environmental
+4. The chosen policy must afford all inputs; treatment spends available medicine.
+   Consumption and environmental
    pressure then affect the community.
 5. The simulator records both material outcomes and decision-time representation.
 
@@ -112,6 +118,9 @@ suite uses 100 replications per rule and condition; the command above uses 20.
 controls population size (40 in Shelter Alpha). Named-agent scenarios reject
 resizing because their identities and trust links are part of the input.
 
+The [physical accounting rules](docs/physical_accounting.md) explain bounded
+energy generation, failed actions, medical rationing, and a small runnable example.
+
 ## Reading Results Responsibly
 
 Rules share initial conditions and external random events for a given seed and
@@ -129,12 +138,13 @@ Adaptive assessments are configured under `parameters.decision`. Use
 `"mode": "fixed"` for static rankings, or equal specialist/general accuracy to
 remove the information advantage. The suite includes these comparisons.
 
-The earlier check on 2026-10-13 validated 640 simulations at 40 rounds;
-411 ended without survivors under the original resource budget. The baseline
-now uses lower net consumption and a combined food-production/water-recovery
-policy, with a subsequent hazard revision recording 58 extinctions among 400
-baseline trials. See [resource balance](docs/resource_balance.md) for the rationale and
-new checks, and [project status](docs/project_status.md) for verification scope.
+The [current results and discussion](docs/current_results.md) use the current
+physical accounting rules and include a retained reviewer evidence snapshot.
+Historical extinction counts and earlier resource/hazard calibrations remain in
+[project status](docs/project_status.md) and [resource balance](docs/resource_balance.md).
+They apply to their dated engine/configuration, not automatically to this version.
+The [study protocol](docs/study_protocol.md) explains the refreshed seed schedule,
+physical sensitivity probes, primary outcomes, and inference limits.
 
 See [context architecture](docs/context_architecture.md) for the
 connection between reusable mechanics, scenario assumptions, and narrative

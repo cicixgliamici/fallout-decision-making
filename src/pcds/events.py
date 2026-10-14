@@ -6,10 +6,11 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-EVENT_SCHEMA = "simulation-events-v1"
+EVENT_SCHEMA = "simulation-events-v2"
 EventKind = Literal[
     "policy_selected",
     "policy_override",
+    "policy_blocked",
     "resource_change",
     "treatment",
     "injury",

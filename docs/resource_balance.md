@@ -6,6 +6,10 @@ imagined lunar bases and long-duration space missions motivate the same question
 This update adds context and changes scenario assumptions, without adding shifts,
 factions, or an incident engine.
 
+The calibration results on this page are historical, from before the
+2026-10-14 [physical accounting revision](physical_accounting.md). Re-running
+these commands now uses new mechanics, including for the archived scenarios.
+
 ## Why the Original Budget Failed
 
 With 40 residents, the original scenario consumed 32 food and 28 water units per
@@ -35,7 +39,7 @@ population does not automatically resize production.
 
 For 40 residents, a ten-cycle schedule of six farming, three medicine, and one
 defense action supplies 84 food, 72 water, and 24 medicine against demand of
-80, 60, and 16 respectively. This leaves room for medical and security decisions;
+80, 60, and 16 respectively, before the new stock-budgeted treatment spending. This leaves room for medical and security decisions;
 it does not guarantee that imperfectly informed voters find that schedule.
 Exploration remains an uncertain alternative with injury risk. The first
 adjustment changed the resource budget without targeting an extinction count.
@@ -63,8 +67,10 @@ separate severe-scarcity consumption overrides.
 
 ## Verification and Reproduction
 
-The feasibility test executes the schedule for 40 cycles, using a finite energy
-reserve of 100, no external shocks, and the existing background health damage.
+The current feasibility test executes the schedule for 40 cycles using the
+baseline energy reserve of 50, bounded routine replenishment, stock-budgeted
+treatment, no external shocks, and the existing background health damage.
+Every scheduled action must pass the actual affordability gate.
 All original residents survive and food, water, and medicine remain positive.
 This demonstrates an available response under stated conditions, not an optimal
 policy or unlimited sustainability.
@@ -153,14 +159,13 @@ The stronger shock condition leaves 5.63% of the original population alive on
 average; severe scarcity leaves 4.00%. Reports and complete scenario metadata
 are in `results/balance_revision/suite/`.
 
-## Remaining Accounting Limits
+## Accounting Revision
 
-Energy still lacks replenishment and a universal affordability gate. Treatment
-still lacks a stock-constrained allocation process. The default energy reserve
-therefore cannot establish physically sustainable operation; the feasibility
-test supplies enough energy explicitly to avoid that shortcut. These issues
-require separate mechanics and assessment changes, rather than silently
-claiming that this scenario adjustment resolves them.
+These gaps are now addressed by [physical accounting](physical_accounting.md):
+bounded routine energy generation, upfront input checks, and proportional
+stock-budgeted treatment. The recorded extinction counts above precede this
+revision. They remain historical evidence, not results for the new engine.
+Fuel, maintenance, and empirical calibration remain outside scope.
 
 Existing numerical outputs must be regenerated for the new baseline. Randomness
 keys and metric definitions are unchanged; within each budget, the mechanisms

@@ -60,13 +60,16 @@ def _validate_trace(results: Sequence[RoundResult]) -> None:
     """Reject unrecorded or mixed histories rather than fill gaps with fiction."""
     if not results:
         raise ValueError("a report requires at least one recorded round")
-    identity = (results[0].rule, results[0].simulation_seed, results[0].initial_population)
+    first = results[0]
+    identity = (first.rule, first.simulation_seed, first.initial_population, first.physics_schema)
     for index, result in enumerate(results):
-        if (result.rule, result.simulation_seed, result.initial_population) != identity:
+        if (
+            result.rule, result.simulation_seed, result.initial_population, result.physics_schema
+        ) != identity:
             raise ValueError("rounds must belong to the same simulation")
         if index and result.step != results[index - 1].step + 1:
             raise ValueError("rounds must be consecutive and ordered")
-        if not result.events or result.events[0].kind != "policy_selected":
+        if not any(event.kind == "policy_selected" for event in result.events):
             raise ValueError("event records are required; use record_events=True")
         for sequence, event in enumerate(result.events):
             if event.step != result.step or event.sequence != sequence:
@@ -85,6 +88,7 @@ def render_report(
         profile.title,
         profile.introduction,
         f"Rule: {first.rule} | Seed: {first.simulation_seed}",
+        f"Physics: {first.physics_schema}",
         "Cycles are decision allocations, not calendar days or work shifts.",
         "Resource amounts and health are abstract model units.",
         "",
@@ -98,6 +102,7 @@ def _round_report(result: RoundResult, profile: NarrativeProfile) -> list[str]:
     """Keep decision-time representation separate from end-of-cycle outcomes."""
     events = result.events
     lines = [f"CYCLE {result.step + 1:04d} / simulation step {result.step}"]
+    lines.extend(_resource_changes(events, "energy_replenishment", "Routine power"))
     if result.eligible_voters:
         lines.append(
             f"Priority: {profile.label(result.selected_policy)} [{result.selected_policy.value}]"
@@ -107,12 +112,15 @@ def _round_report(result: RoundResult, profile: NarrativeProfile) -> list[str]:
     for event in events:
         if event.kind == "policy_override":
             lines.append(f"Institutional override: {event.cause} -> {event.subject}.")
+    if not result.policy_executed:
+        lines.append(f"Policy not executed: {result.policy_block_reason}.")
     lines.append(
         f"Eligible voters: {result.eligible_voters} | "
         f"Largest ballot share: {_optional(result.max_vote_share)} | "
         f"Preference satisfaction: {_optional(result.preference_satisfaction)}"
     )
     lines.extend(_resource_changes(events, result.selected_policy.value, "Policy effects"))
+    lines.extend(_resource_changes(events, "treatment", "Treatment supplies"))
     lines.extend(_policy_health_report(events))
     lines.extend(_resource_changes(events, "consumption", "Consumption"))
     shortages = [event.subject for event in events if event.kind == "shortage"]
@@ -198,6 +206,7 @@ def export_event_log(
         "event_schema": EVENT_SCHEMA,
         "randomness_scheme": RANDOMNESS_SCHEME,
         "metric_schema": METRIC_SCHEMA,
+        "physics_schema": results[0].physics_schema,
         "rounds": [result.model_dump(mode="json") for result in results],
     }
     if scenario_configuration is not None:

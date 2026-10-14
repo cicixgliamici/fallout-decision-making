@@ -13,6 +13,8 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from pcds.events import SimulationEvent
 
+PHYSICS_SCHEMA = "stock-budgeted-v2"
+
 
 class Role(str, Enum):
     """A member role identifies a specialist policy domain, not a privileged voting right."""
@@ -92,6 +94,8 @@ class Agent(BaseModel):
 class CommunityState(BaseModel):
     """Shared stock counters, not individual resource allocations or a market."""
 
+    model_config = ConfigDict(allow_inf_nan=False)
+
     food: float = Field(default=100.0, ge=0.0)
     water: float = Field(default=100.0, ge=0.0)
     medicine: float = Field(default=50.0, ge=0.0)
@@ -106,6 +110,8 @@ class CommunityState(BaseModel):
 class PolicyImpact(BaseModel):
     """Assumed changes in stocks and health when one policy is applied for a round."""
 
+    model_config = ConfigDict(allow_inf_nan=False)
+
     energy_cost: float = Field(default=2.0, ge=0.0)
     food_delta: float = 0.0
     water_delta: float = 0.0
@@ -115,6 +121,14 @@ class PolicyImpact(BaseModel):
     injury_probability: float = Field(default=0.0, ge=0.0, le=1.0)
     injury_min: float = Field(default=0.0, ge=0.0, le=1.0)
     injury_max: float = Field(default=0.0, ge=0.0, le=1.0)
+
+    def required_inputs(self) -> dict[str, float]:
+        """Expose upfront costs consistently to physical gates and private estimates."""
+        costs = {"energy": self.energy_cost}
+        for resource in ("food", "water", "medicine", "security"):
+            # Only negative deltas require inputs; output cannot fund these costs.
+            costs[resource] = max(0.0, -getattr(self, f"{resource}_delta"))
+        return costs
 
 
 class EnvironmentalShock(BaseModel):
@@ -189,6 +203,13 @@ class SimulationParameters(BaseModel):
     Consumption is per living member; policy resource deltas are community-wide amounts.
     """
 
+    model_config = ConfigDict(allow_inf_nan=False)
+    # Routine generation is independent of the winning policy. Capacity limits
+    # replenishment, rather than discarding an authored initial energy reserve.
+    energy_replenishment: float = Field(default=2.0, ge=0.0)
+    energy_capacity: float = Field(default=50.0, ge=0.0)
+    # One unit buys one summed health point, not one resident or one fixed dose.
+    treatment_medicine_per_health: float = Field(default=1.0, gt=0.0)
     food_consumption: float = Field(default=0.8, ge=0.0)
     water_consumption: float = Field(default=0.7, ge=0.0)
     medicine_consumption: float = Field(default=0.08, ge=0.0)
@@ -233,6 +254,9 @@ class RoundResult(BaseModel):
     step: int
     rule: str
     selected_policy: Policy
+    physics_schema: str = PHYSICS_SCHEMA
+    policy_executed: bool = True
+    policy_block_reason: str | None = None
     survival_rate: float
     welfare: float
     resilience: float = 0.0

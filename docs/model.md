@@ -56,7 +56,11 @@ target, divided by that target, weighted by its scarcity-damage parameter plus
 `reserve_weight` (energy has only the reserve weight). Expected healing is the
 minimum of estimated mean health deficit and estimated health boost times the
 estimated fraction of living agents below the treatment threshold of 0.75.
-Expected injury is injury probability times midpoint injury severity.
+It is additionally capped by estimated post-production medicine divided by
+medicine cost per health point and living population. Expected treatment spending
+is deducted from the medicine reserve effect. Policies whose required inputs
+appear unaffordable receive a score of -1 plus their original-priority term;
+private stock estimates may differ from the physical gate. Expected injury is injury probability times midpoint injury severity.
 
 The final score is:
 
@@ -100,8 +104,10 @@ recovery. The legacy scenario retains farming's original water cost.
 Consumption is measured per living member, while policy stock changes are
 community-wide amounts. These units matter: increasing population without
 increasing policy production can make shortages unavoidable under a fixed
-budget. Energy costs currently reduce a nonnegative stock counter without a
-universal action-affordability gate. Medicine treatment is not stock-budgeted.
+budget. Routine power generation, upfront affordability checks, and proportional
+stock-budgeted treatment are defined in [physical accounting](physical_accounting.md).
+The selected policy is recorded even if it cannot execute; no automatic physical
+substitution occurs.
 See [limitations](limitations.md) before treating these effects as realistic.
 
 The baseline's consumption rates represent net reserve draw after routine

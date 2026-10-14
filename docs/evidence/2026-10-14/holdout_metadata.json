@@ -1,0 +1,147 @@
+{
+  "purpose": "separate exploratory seed-block check, not empirical validation",
+  "runs": 20,
+  "steps": 40,
+  "seed": 10042,
+  "scenario_configuration": {
+    "name": "Shelter Alpha",
+    "description": "Vault 47: an isolated colony governance experiment, testing survival and representation under limited resources. Shelter Alpha is the retained technical scenario identifier.",
+    "agents": 40,
+    "resources": {
+      "food": 100.0,
+      "water": 100.0,
+      "medicine": 50.0,
+      "energy": 50.0,
+      "security": 50.0
+    },
+    "policies": [
+      "farming",
+      "medicine",
+      "defense",
+      "exploration"
+    ],
+    "parameters": {
+      "energy_replenishment": 2.0,
+      "energy_capacity": 50.0,
+      "treatment_medicine_per_health": 1.0,
+      "food_consumption": 0.2,
+      "water_consumption": 0.15,
+      "medicine_consumption": 0.04,
+      "scarcity_food_threshold": 0.5,
+      "scarcity_water_threshold": 0.5,
+      "scarcity_medicine_threshold": 0.05,
+      "scarcity_food_damage": 0.05,
+      "scarcity_water_damage": 0.06,
+      "scarcity_medicine_damage": 0.02,
+      "low_security_threshold": 30.0,
+      "low_security_damage": 0.02,
+      "random_health_damage_max": 0.015,
+      "death_threshold": 0.05,
+      "decision": {
+        "mode": "adaptive",
+        "general_accuracy": 0.55,
+        "expert_accuracy": 0.9,
+        "observation_noise": 0.6,
+        "effect_noise": 0.6,
+        "planning_horizon": 3,
+        "preference_weight": 0.01,
+        "reserve_weight": 0.02
+      },
+      "metrics": {
+        "welfare_weights": {
+          "survival": 0.65,
+          "health": 0.25,
+          "resources": 0.1
+        },
+        "resource_reference": {
+          "food": 100.0,
+          "water": 100.0,
+          "medicine": 50.0,
+          "energy": 50.0,
+          "security": 50.0
+        }
+      },
+      "shock": {
+        "probability": 0.22,
+        "food_loss": 12.0,
+        "water_loss": 10.0,
+        "medicine_loss": 4.0,
+        "security_loss": 6.0,
+        "health_damage": 0.025
+      },
+      "policy_impacts": {
+        "farming": {
+          "energy_cost": 2.0,
+          "food_delta": 14.0,
+          "water_delta": 12.0,
+          "medicine_delta": 0.0,
+          "security_delta": 0.0,
+          "health_boost": 0.0,
+          "injury_probability": 0.0,
+          "injury_min": 0.0,
+          "injury_max": 0.0
+        },
+        "medicine": {
+          "energy_cost": 2.0,
+          "food_delta": 0.0,
+          "water_delta": 0.0,
+          "medicine_delta": 8.0,
+          "security_delta": 0.0,
+          "health_boost": 0.08,
+          "injury_probability": 0.0,
+          "injury_min": 0.0,
+          "injury_max": 0.0
+        },
+        "defense": {
+          "energy_cost": 4.0,
+          "food_delta": 0.0,
+          "water_delta": 0.0,
+          "medicine_delta": 0.0,
+          "security_delta": 9.0,
+          "health_boost": 0.0,
+          "injury_probability": 0.0,
+          "injury_min": 0.0,
+          "injury_max": 0.0
+        },
+        "exploration": {
+          "energy_cost": 2.0,
+          "food_delta": 7.0,
+          "water_delta": 5.0,
+          "medicine_delta": 2.5,
+          "security_delta": 0.0,
+          "health_boost": 0.0,
+          "injury_probability": 0.02,
+          "injury_min": 0.08,
+          "injury_max": 0.2
+        }
+      }
+    },
+    "trust_topology": "expertise_clustered",
+    "trust_probability": 0.18,
+    "trust_edges": null,
+    "role_distribution": null
+  },
+  "source_sha256": {
+    "pyproject.toml": "efa9b8bb485b86c3c1962c981233d7f8776dbad3fabcd54e00b814677bd202eb",
+    "requirements.txt": "caaa5ec901dc59204f5273de0d85e1affac8da4c41ce5e6d41691c189dfd27d9",
+    "rules/governance.pl": "c528451c697b8ff5eeb169a8066caff68d596df32479a7df7f490c2818932846",
+    "src/pcds/__init__.py": "9691c9b2c476dca3d17e99ffed01c9b4c71d18f33c9541c2f408dc29a4a0370f",
+    "src/pcds/assessment.py": "80c1057ef513527f704f60d4600788c8fd3df277596f42123059b3ca72a53c0f",
+    "src/pcds/cli.py": "ff91cb2b94ee577ae69b6455f46b2e954ae3fa4b02867858e2d4beb769a657c1",
+    "src/pcds/events.py": "4c6240e7141ea14d7ed88adb6e2bd2e70618ead27896955566fffa58f77ae458",
+    "src/pcds/experiments.py": "dd340d5df2b7a67d0250a3d877e1e49e290a9bb20868bb8307295e3f27ca2a1e",
+    "src/pcds/factory.py": "eede1b1c81b5c95a95bdb55b3651d95a45085916da2f43a072a3eed3bf791c42",
+    "src/pcds/metric_definitions.py": "f499b71ddd764cd36b9ef68266019ce0798eb831f9109287234c5dba65aea4a9",
+    "src/pcds/metrics.py": "49416d89ab0d1587eb708c72aeeb179d8d127d3b846600025bd535c65bcbff3d",
+    "src/pcds/models.py": "e24219eeabf2a4b0d8d37fb43778cb811c94f0255a5401a5e7c4484b4bb23003",
+    "src/pcds/narrative.py": "d23f2021aa47ccef511ebda0e82c10e653deb7e874a5e55979706a5015c6bfb3",
+    "src/pcds/paired_analysis.py": "f311ae6939517a81f0643d9c2f33735f205f2ed82bf5263477e30e0ae1c9909e",
+    "src/pcds/prolog_rules.py": "6395e7fc280cb209ffb03ca4efaa616c07a8b2d3cf4351344dc1ad7478894109",
+    "src/pcds/provenance.py": "7bbe5c368aeb6f7b6024fab8d6a3889e12329f67bcae918e4cfccc1946bda8a7",
+    "src/pcds/randomness.py": "3288c022857403ef92943908bfdcd4520979fe3135cf2542875676f548bb2a8c",
+    "src/pcds/research_reporting.py": "907afb24b55af44ec521e9220f782eec0326300142b74ab7c015f4399b59e353",
+    "src/pcds/scenarios.py": "cbd0f7cbf3b19542b60d1e5e1d1e69974294e62e4bf5d2bbda21fede80e777f6",
+    "src/pcds/simulation.py": "d5b70f31fe684bc08eea589ea05255f9d382b636b228d4cb68e88365ebf70660",
+    "src/pcds/voting.py": "49b022725ffe1981c8e328f9b08e969c050df8923e2bd69b4cf88ffb36035a38"
+  }
+}

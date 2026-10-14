@@ -45,6 +45,14 @@ def pairing_errors(raw: pl.DataFrame, baseline_rule: str = "majority") -> list[s
         if raw.select(["experiment", "rule", identity]).is_duplicated().any():
             return [f"pairing requires unique {identity} per experiment and rule"]
     errors: list[str] = []
+    if "physics_schema" in raw.columns:
+        # Old files lack this field. If present, require one complete version
+        # per condition so identical draw digests cannot hide changed mechanics.
+        versions = raw.group_by("experiment").agg(
+            pl.col("physics_schema").n_unique().alias("versions")
+        )
+        if raw["physics_schema"].null_count() or versions.filter(pl.col("versions") != 1).height:
+            errors.append("paired rules have different or missing physics schemas")
     if "environment_trace_digest" in raw.columns:
         traces = raw.group_by(PAIR_KEYS).agg(
             pl.col("environment_trace_digest").n_unique().alias("trace_count")

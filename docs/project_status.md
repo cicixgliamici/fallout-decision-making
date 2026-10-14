@@ -1,7 +1,9 @@
 # Project Status and Review Readiness
 
-Status snapshot: **2026-10-13**. This is a dated verification record, not a claim
-that future changes automatically inherit these results.
+Latest documentation and Python regression check: **2026-10-14**. Historical
+calibration records are dated **2026-10-13**; the new accounting check below
+is dated **2026-10-14**. Each verification applies
+only to its stated configuration and scope.
 
 ## Current Position
 
@@ -14,10 +16,103 @@ empirically grounded scientific study.
 | --- | --- | --- |
 | Simulation correctness | Death/exclusion handling, cycle fallbacks, population overrides, and vote conservation tests | Correct execution does not establish realistic dynamics. |
 | Information and expertise | Adaptive rankings, private errors, specialist accuracy, and fixed/equal-accuracy comparisons | Accuracy levels and assessment heuristics are assumed. |
-| Experimental control | Shared external draws, trace digests, seed pairs, and bootstrap intervals | Small samples, multiple comparisons, and conditional selection limit inference. |
+| Experimental control | Shared external draws, trace digests, seed pairs, bootstrap intervals, and parallel/sequential equality checks | Pointwise intervals, multiple comparisons, and conditional selection limit inference. |
 | Metrics | Separate health, survival, satisfaction, and ballot control; explicit welfare assumptions | Normative indices do not define one universally best institution. |
+| Research argument | Primary-source motivation, assumption register, ODD specification, and exploratory protocol | No empirical calibration or comprehensive global sensitivity study. |
+| Reporting | Readable outcome/paired tables, figures, coverage, and source provenance | Visual clarity does not establish external validity. |
 | Prolog | Optional eligibility/admissibility bridge and Python fallback | Real-engine equivalence has not been established by the recorded Python-only check. |
 | Lean | Small definitions and proofs that mainly unpack those definitions | No proof of delegation termination, vote conservation, or simulator correctness. |
+
+## Refreshed Research Study: 2026-10-14
+
+The [current results and discussion](current_results.md) is now the main reviewer
+entry point, with a [retained evidence snapshot](evidence/2026-10-14/suite_report.md).
+The [research basis](research_basis.md) supplies inspected primary sources and an
+assumption register; the [ODD specification](model_specification.md) and
+[study protocol](study_protocol.md) expose the model and exploratory design.
+
+- Regenerated **5,600 trajectories**: 14 conditions, four rules, 100 seeds per
+  rule/condition (42-141), 40 cycles, 40 initial residents. The optional physical
+  panel probes energy generation, treatment conversion costs, and lower hazards.
+- A separate baseline block adds **80 trajectories**, seeds 10042-10061;
+  it is analyzed separately and is not empirical validation.
+- Main and separate-block consistency checks pass with **no errors or warnings**.
+  The main outputs contain 56 summary rows, 784 effect rows, and 78,400 per-seed
+  metric differences. There are 1,308 extinctions across mixed main conditions;
+  the baseline alone records 42/400.
+- Baseline survival means are 14.525% plurality, 28.80% top-two approval,
+  and 13.30% for each delegation rule. Approval minus plurality is +14.275
+  percentage points, with a pointwise 95% interval [9.325, 19.67625]. Both
+  delegation survival intervals cross zero; concentration increases among their
+  defined comparison electorates. See the results discussion for coverage,
+  selection, multiple-comparison, and interpretation limits.
+- No-generation trials all end in extinction (400/400). Lower-hazard trials
+  have no extinctions, with rule mean survival 77.25-98.80%. Higher generation
+  and the tested 0.5/2 medical conversion costs leave survival unchanged; this
+  does not establish that these constraints are irrelevant outside the range.
+- **195 Python tests passed**, including parallel/sequential output equality,
+  sensitivity construction, report units, missing outcomes and coverage. Ruff,
+  whitespace, local links, source/artifact hashes, archive reconstruction, and
+  final visual inspection passed. An independent seed-42 replay matches all
+  four corresponding main-study rows exactly.
+- The report now separates readable tables/figures from full CSV downloads.
+  Metadata includes complete condition configurations and normalized source
+  hashes identifying uncommitted code. The approximately 4.5 MB evidence snapshot
+  preserves raw outcomes and losslessly compressed differences outside ignored
+  result directories, with recorded project/test dependencies and checksums.
+- The baseline mechanics/parameters were preserved; condition execution can use
+  independent processes (`--workers 4`) without changing seed ownership or row
+  order. Earlier small runs remain historical; the new study supersedes their
+  precision, not the scope of the model. Real SWI-Prolog, Lean, and clean-room
+  installation were not checked.
+
+## Documentation and Regression Check: 2026-10-14
+
+- Separated AI coding instructions into root `AGENTS.md`; `Setting.md` now
+  contains narrative design without the operational agent section.
+- Added a [reader index](README.md) and a [development roadmap](roadmap.md),
+  replacing the setting document's partly superseded milestone list.
+- Re-ran the Python suite: **156 tests passed** (`python -m pytest -q`).
+- Local Markdown file links resolve; `git diff --check` passed.
+- No simulation code, scenario parameters, or numerical outputs changed.
+  Existing numerical outputs do not need regeneration for this documentation update.
+- This check did not re-run the large research suites, Ruff, Lean, or real
+  SWI-Prolog integration. Earlier calibration records below retain their dates.
+
+## Physical Accounting Revision: 2026-10-14
+
+Bounded routine power generation now precedes assessment. All policy inputs
+must be affordable before any effects occur, and treatment spends post-production
+medical stock in proportion to actual health recovery. Limited supply scales all
+patient requests by a common fraction. Adaptive assessments estimate these
+constraints. See [physical accounting](physical_accounting.md) for parameters,
+ordering, rationale, and the committed two-resident demonstration.
+
+- Physics schema is `stock-budgeted-v2`; events use `simulation-events-v2`.
+  CLI commands remain available, but physical outcomes and assessment scores
+  change. Regenerate previous numerical results, including archived scenarios.
+- Python regression suite: **186 tests passed**. Ruff, whitespace checks, and
+  local Markdown file links passed. Tests include zero/exact/insufficient inputs,
+  atomic failure, capped generation, stock-budgeted proportional care, patient
+  ordering, replay, recording independence, and mixed-physics rejection.
+- The 40-cycle no-shock prescribed schedule uses the baseline energy reserve,
+  actual replenishment, and medical spending; all 40 residents survive and every
+  scheduled action executes. This is finite-horizon feasibility, not indefinite
+  sustainability or a claim that a voting mechanism finds the schedule.
+- A small eight-condition suite uses seeds 42-46, five replications per rule,
+  four rules, and 40 cycles: **160 runs**, 32 summary rows. Validation passes
+  with the expected warning that fewer than 20 replications give limited
+  confidence-interval evidence. Outputs and metadata are in
+  `results/accounting_revision/suite/` (ignored by Git).
+- The small suite records **71 extinctions out of 160**. Its baseline records
+  7/20 extinctions and mean survival of 4-5.5% across rules. The new accounting
+  does not make the severe baseline benign. These are small-sample diagnostics,
+  not a mechanism ranking or a replacement for the old 400-run calibration.
+- The runnable demonstration generates `results/accounting_demo/report.txt`
+  and `events.json`: the first action is blocked by energy, the next restores
+  0.02 total health using exactly the 0.02 medical units produced that cycle.
+- Real SWI-Prolog and Lean were not run. No fuel, maintenance, infrastructure
+  failure, or clinical protocol has been added.
 
 ## Earlier Verification: Original Resource Budget
 
@@ -120,19 +215,26 @@ The baseline now offers a feasible finite-horizon food/water/medicine schedule
 through explicit scenario assumptions; see [resource balance](resource_balance.md).
 The original deficit-heavy scenario remains archived for comparison. This
 adjustment does not establish empirical validity or indefinite sustainability.
-Energy is not replenished
-by current policies, and expenditure is floored at zero rather than universally
-blocking actions. Medicine's healing effect is not constrained by stock or
-patient-level allocation. These assumptions can dominate differences between
-decision mechanisms. Further scenarios should expose this, not be tuned to make
-a preferred mechanism win.
+Bounded routine power, upfront affordability, and proportional stock-budgeted
+care are now implemented; see [physical accounting](physical_accounting.md).
+Fuel, maintenance, and clinical treatment protocols remain abstract. Further
+scenarios should examine sensitivity to generation, conversion cost, and input
+constraints without tuning a preferred mechanism to win. Historical calibration
+counts below the earlier checks do not describe the revised physical model.
 
-Next connect the research question and assumptions to relevant scholarship,
-analyze substantive results and tradeoffs, and assess sensitivity beyond the
-current presets. A reviewed bibliography has not yet been supplied. Before a
-public artifact release, verify optional layers separately, pin/reconstruct the
-environment, check installation outside the repository, and complete contributor
-and citation metadata.
+The [research basis](research_basis.md) now connects the question to inspected
+primary sources and records authored assumptions. The [ODD specification](model_specification.md)
+and [study protocol](study_protocol.md) make the model and experimental design
+inspectable; [current results](current_results.md) provides the substantive
+results discussion and retained evidence. These are an initial exploratory study,
+not empirical validation or an exhaustive literature review.
+
+Remaining research includes domain-informed parameter ranges, broader behavioral
+and population sensitivity, interactions, and independent replication. Before a
+public artifact release, verify optional layers separately, test a reconstructed
+clean environment and installation outside the repository, and complete contributor
+and citation metadata. The recorded project/test dependency snapshot identifies
+the checked environment but does not establish a portable lockfile or clean-room install.
 
 See [limitations](limitations.md), [artifact checklist](artifact_checklist.md),
 and [presentation guide](presentation_guide.md) for the corresponding boundaries

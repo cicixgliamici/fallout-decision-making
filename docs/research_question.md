@@ -30,8 +30,10 @@ survivor health must also show survival and population health. A claim about
 representation must include participation and ballot-control information.
 
 An interval or test result does not establish that the assumptions describe a
-real community. The literature-grounded argument, material calibration, and
-substantive analysis remain research work; see [project status](project_status.md).
+real community. The [research basis](research_basis.md) connects the argument to primary
+literature and identifies authored parameters; [current results](current_results.md)
+provides a substantive discussion. Empirical calibration, broader robustness,
+and independent validation remain open; see [project status](project_status.md).
 
 ## Interdisciplinary Scope
 
@@ -43,3 +45,10 @@ analysis are future extensions rather than current game-theory results.
 
 The original post-crisis setting illustrates the problem without requiring a
 third-party fictional universe. It supplies context, not empirical validation.
+
+## Explicit Exploratory Analysis Plan
+
+See the [study protocol](study_protocol.md) for primary/secondary outcomes,
+fixed condition ranges, seed reuse, comparison families, and what evidence
+would remain inconclusive. The [ODD model specification](model_specification.md)
+makes state, timing, initialization, and submodels inspectable.

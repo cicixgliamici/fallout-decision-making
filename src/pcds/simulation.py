@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import random
 from collections import Counter
 from pathlib import Path
@@ -30,7 +31,7 @@ from pcds.metrics import (
     survivor_health,
     welfare_components,
 )
-from pcds.models import Agent, CommunityState, Policy, RoundResult, SimulationParameters
+from pcds.models import PHYSICS_SCHEMA, Agent, CommunityState, Policy, RoundResult, SimulationParameters
 from pcds.prolog_rules import PrologRuleEngine
 from pcds.randomness import RANDOMNESS_SCHEME, EnvironmentalDraws, event_rng, sample_environment
 from pcds.scenarios import Scenario, default_scenario_path, load_scenario
@@ -84,6 +85,7 @@ def run_simulation(
         recorder = EventRecorder(step) if record_events else None
         # A round separates outside conditions, the decision, and its effects.
         environment = sample_environment(run_seed, step, agents, parameters)
+        _replenish_energy(agents, state, parameters, recorder)
         preference_changes, assessment_error = update_preferences(
             agents, state, parameters, priors, run_seed, step
         )
@@ -110,7 +112,7 @@ def run_simulation(
         satisfaction = preference_satisfaction(eligible_agents, selected)
         prior_satisfaction = preference_satisfaction(eligible_agents, selected, priors)
         power = delegation_power(outcome.representatives)
-        _apply_policy(selected, agents, state, run_seed, step, parameters, recorder)
+        block_reason = _apply_policy(selected, agents, state, run_seed, step, parameters, recorder)
         shock_occurred = _apply_environmental_pressure(
             agents, state, environment, parameters, recorder
         )
@@ -120,6 +122,8 @@ def run_simulation(
                 step=step,
                 rule=rule,
                 selected_policy=selected,
+                policy_executed=block_reason is None,
+                policy_block_reason=block_reason,
                 survival_rate=survival_rate(agents),
                 **_material_metrics(agents, state, parameters),
                 inequality=health_inequality(agents),
@@ -214,6 +218,16 @@ def compare_rules(
                     "environment_trace_digest": _environment_trace_digest(results),
                     "randomness_scheme": RANDOMNESS_SCHEME,
                     "metric_schema": METRIC_SCHEMA,
+                    "physics_schema": PHYSICS_SCHEMA,
+                    # Extinct-colony placeholders are inactive observations,
+                    # not failed attempts to pay for a policy.
+                    "blocked_policy_count": sum(
+                        (result.policy_block_reason or "").startswith("insufficient_")
+                        for result in results
+                    ),
+                    "inactive_cycle_count": sum(
+                        result.policy_block_reason == "no_living_residents" for result in results
+                    ),
                 }
             )
 
@@ -279,19 +293,22 @@ def _apply_policy(
     step: int,
     parameters: SimulationParameters,
     recorder: EventRecorder | None = None,
-) -> None:
+) -> str | None:
     """Apply the scenario's community-wide stock changes and individual health effects.
 
     This is the physical model, separate from what members believed before choosing.
     """
+    reason = _policy_block_reason(policy, agents, state, parameters)
+    if reason:
+        if recorder:
+            recorder.record("policy_blocked", policy.value, reason)
+        return reason
     impact = parameters.policy_impacts[policy]
 
     # Policy impacts update shared resources first; individual health effects
     # are applied afterward so the same decision can affect both the shelter and
     # its members.
     _change_resource(state, "energy", -impact.energy_cost, policy.value, recorder)
-    # Zero is an accounting floor, not a universal affordability check: the
-    # current physical model still applies effects when energy is insufficient.
     for resource in ("food", "water", "medicine"):
         delta = getattr(impact, f"{resource}_delta")
         rng = event_rng(seed, "policy_resource", step, policy.value, resource)
@@ -300,8 +317,38 @@ def _apply_policy(
         )
     _change_resource(state, "security", impact.security_delta, policy.value, recorder)
 
-    _apply_treatment(policy, agents, seed, step, parameters, recorder)
+    _apply_treatment(policy, agents, state, seed, step, parameters, recorder)
     _apply_injuries(policy, agents, seed, step, parameters, recorder)
+    return None
+
+
+def _replenish_energy(
+    agents: list[Agent],
+    state: CommunityState,
+    parameters: SimulationParameters,
+    recorder: EventRecorder | None = None,
+) -> None:
+    """Generate routine power before assessment, only while the colony is inhabited."""
+    if not any(agent.alive for agent in agents):
+        return
+    headroom = max(0.0, parameters.energy_capacity - state.energy)
+    gain = min(parameters.energy_replenishment, headroom)
+    _change_resource(state, "energy", gain, "energy_replenishment", recorder)
+
+
+def _policy_block_reason(
+    policy: Policy,
+    agents: list[Agent],
+    state: CommunityState,
+    parameters: SimulationParameters,
+) -> str | None:
+    """Require all inputs up front: a policy cannot finance its own operating costs."""
+    if not any(agent.alive for agent in agents):
+        return "no_living_residents"
+    for resource, cost in parameters.policy_impacts[policy].required_inputs().items():
+        if getattr(state, resource) < cost:
+            return f"insufficient_{resource}"
+    return None
 
 
 def _change_resource(
@@ -322,27 +369,45 @@ def _change_resource(
 def _apply_treatment(
     policy: Policy,
     agents: list[Agent],
+    state: CommunityState,
     seed: int,
     step: int,
     parameters: SimulationParameters,
     recorder: EventRecorder | None,
 ) -> None:
-    """Record actual healing without inventing medicine doses or patient assignments."""
+    """Share a limited medicine budget proportionally across capped health requests."""
     impact = parameters.policy_impacts[policy]
-
-    if impact.health_boost > 0:
-        # Treatment currently uses a health threshold, not a medicine budget
-        # or patient-allocation process. That is a stated calibration limitation.
-        for agent in agents:
-            if agent.alive and agent.health < 0.75:
-                rng = event_rng(seed, "policy_healing", step, policy.value, agent.name)
-                boost = rng.uniform(impact.health_boost * 0.5, impact.health_boost * 1.5)
-                before = agent.health
-                agent.health = min(1.0, agent.health + boost)
-                if recorder:
-                    recorder.record(
-                        "treatment", agent.name, policy.value, before, agent.health, boost
-                    )
+    if impact.health_boost <= 0 or state.medicine <= 0:
+        return
+    requests = []
+    # Sorting plus fsum makes rationing independent of authored population order.
+    for agent in sorted(agents, key=lambda member: member.name):
+        if agent.alive and agent.health < 0.75:
+            rng = event_rng(seed, "policy_healing", step, policy.value, agent.name)
+            boost = rng.uniform(impact.health_boost * 0.5, impact.health_boost * 1.5)
+            requests.append((agent, min(1.0 - agent.health, boost)))
+    requested_health = math.fsum(boost for _, boost in requests)
+    if not requested_health:
+        return
+    unit_cost = parameters.treatment_medicine_per_health
+    coverage = min(1.0, state.medicine / unit_cost / requested_health)
+    # Debit only actual capped recovery; unused supply stays available for routine use.
+    healed = []
+    for agent, requested in requests:
+        before = agent.health
+        agent.health = min(1.0, before + requested * coverage)
+        healed.append((agent, before, requested))
+    medicine_used = min(
+        state.medicine,
+        math.fsum(agent.health - before for agent, before, _ in healed) * unit_cost,
+    )
+    _change_resource(state, "medicine", -medicine_used, "treatment", recorder)
+    if recorder:
+        for agent, before, requested in healed:
+            recorder.record(
+                "treatment", agent.name, policy.value, before, agent.health, requested,
+                details={"coverage": coverage},
+            )
 
 
 def _apply_injuries(

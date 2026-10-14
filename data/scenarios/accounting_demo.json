@@ -1,0 +1,149 @@
+{
+  "name": "Physical accounting demonstration",
+  "description": "Two residents request medical support: first energy blocks execution, then a small medical supply is rationed proportionally. An accounting example, not a research calibration.",
+  "agents": [
+    {
+      "name": "alice",
+      "role": "doctor",
+      "health": 0.4,
+      "risk_aversion": 0.5,
+      "cooperation": 0.5,
+      "preferences": [
+        "medicine",
+        "farming",
+        "defense",
+        "exploration"
+      ],
+      "general_accuracy": null,
+      "expert_accuracy": null
+    },
+    {
+      "name": "bob",
+      "role": "farmer",
+      "health": 0.2,
+      "risk_aversion": 0.5,
+      "cooperation": 0.5,
+      "preferences": [
+        "medicine",
+        "farming",
+        "defense",
+        "exploration"
+      ],
+      "general_accuracy": null,
+      "expert_accuracy": null
+    }
+  ],
+  "resources": {
+    "food": 100.0,
+    "water": 100.0,
+    "medicine": 0.0,
+    "energy": 0.0,
+    "security": 50.0
+  },
+  "policies": [
+    "farming",
+    "medicine",
+    "defense",
+    "exploration"
+  ],
+  "parameters": {
+    "energy_replenishment": 1.0,
+    "energy_capacity": 2.0,
+    "treatment_medicine_per_health": 1.0,
+    "food_consumption": 0.2,
+    "water_consumption": 0.15,
+    "medicine_consumption": 0.0,
+    "scarcity_food_threshold": 0.5,
+    "scarcity_water_threshold": 0.5,
+    "scarcity_medicine_threshold": 0.05,
+    "scarcity_food_damage": 0.05,
+    "scarcity_water_damage": 0.06,
+    "scarcity_medicine_damage": 0.0,
+    "low_security_threshold": 30.0,
+    "low_security_damage": 0.02,
+    "random_health_damage_max": 0.0,
+    "death_threshold": 0.05,
+    "decision": {
+      "mode": "fixed",
+      "general_accuracy": 0.55,
+      "expert_accuracy": 0.9,
+      "observation_noise": 0.6,
+      "effect_noise": 0.6,
+      "planning_horizon": 3,
+      "preference_weight": 0.01,
+      "reserve_weight": 0.02
+    },
+    "metrics": {
+      "welfare_weights": {
+        "survival": 0.65,
+        "health": 0.25,
+        "resources": 0.1
+      },
+      "resource_reference": {
+        "food": 100.0,
+        "water": 100.0,
+        "medicine": 50.0,
+        "energy": 50.0,
+        "security": 50.0
+      }
+    },
+    "shock": {
+      "probability": 0.0,
+      "food_loss": 12.0,
+      "water_loss": 10.0,
+      "medicine_loss": 4.0,
+      "security_loss": 6.0,
+      "health_damage": 0.025
+    },
+    "policy_impacts": {
+      "farming": {
+        "energy_cost": 2.0,
+        "food_delta": 14.0,
+        "water_delta": 12.0,
+        "medicine_delta": 0.0,
+        "security_delta": 0.0,
+        "health_boost": 0.0,
+        "injury_probability": 0.0,
+        "injury_min": 0.0,
+        "injury_max": 0.0
+      },
+      "medicine": {
+        "energy_cost": 2.0,
+        "food_delta": 0.0,
+        "water_delta": 0.0,
+        "medicine_delta": 0.02,
+        "security_delta": 0.0,
+        "health_boost": 0.08,
+        "injury_probability": 0.0,
+        "injury_min": 0.0,
+        "injury_max": 0.0
+      },
+      "defense": {
+        "energy_cost": 4.0,
+        "food_delta": 0.0,
+        "water_delta": 0.0,
+        "medicine_delta": 0.0,
+        "security_delta": 9.0,
+        "health_boost": 0.0,
+        "injury_probability": 0.0,
+        "injury_min": 0.0,
+        "injury_max": 0.0
+      },
+      "exploration": {
+        "energy_cost": 2.0,
+        "food_delta": 7.0,
+        "water_delta": 5.0,
+        "medicine_delta": 2.5,
+        "security_delta": 0.0,
+        "health_boost": 0.0,
+        "injury_probability": 0.02,
+        "injury_min": 0.08,
+        "injury_max": 0.2
+      }
+    }
+  },
+  "trust_topology": "expertise_clustered",
+  "trust_probability": 0.18,
+  "trust_edges": null,
+  "role_distribution": null
+}

@@ -9,18 +9,33 @@
     "energy": 50,
     "security": 50
   },
-  "policies": ["farming", "medicine", "defense", "exploration"],
+  "policies": [
+    "farming",
+    "medicine",
+    "defense",
+    "exploration"
+  ],
   "trust_topology": "expertise_clustered",
   "trust_probability": 0.18,
   "parameters": {
     "metrics": {
-      "welfare_weights": {"survival": 0.65, "health": 0.25, "resources": 0.10},
-      "resource_reference": {"food": 100, "water": 100, "medicine": 50, "energy": 50, "security": 50}
+      "welfare_weights": {
+        "survival": 0.65,
+        "health": 0.25,
+        "resources": 0.1
+      },
+      "resource_reference": {
+        "food": 100,
+        "water": 100,
+        "medicine": 50,
+        "energy": 50,
+        "security": 50
+      }
     },
     "decision": {
       "mode": "adaptive",
       "general_accuracy": 0.55,
-      "expert_accuracy": 0.90,
+      "expert_accuracy": 0.9,
       "observation_noise": 0.6,
       "effect_noise": 0.6,
       "planning_horizon": 3,
@@ -38,6 +53,9 @@
       "medicine_loss": 2,
       "security_loss": 4,
       "health_damage": 0.01
-    }
+    },
+    "energy_replenishment": 2.0,
+    "energy_capacity": 50.0,
+    "treatment_medicine_per_health": 1.0
   }
 }

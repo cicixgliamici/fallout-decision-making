@@ -41,7 +41,13 @@ def test_experiment_suite_writes_validated_outputs(tmp_path):
     assert "runs is below 20" in validation["warnings"][0]
     assert "Validation status: **PASS**" in report
     assert "Outcome Dashboard" in report
+    assert "```csv" not in report
+    assert (tmp_path / "survival_by_condition.png").stat().st_size > 1000
+    assert (tmp_path / "baseline_paired_effects.png").stat().st_size > 1000
     assert metadata["metric_schema"] == "separate-outcomes-v1"
+    assert metadata["physics_schema"] == "stock-budgeted-v2"
+    assert len(metadata["source_sha256"]["src/pcds/simulation.py"]) == 64
+    assert metadata["primary_metrics"] == ["final_survival_rate", "final_population_health"]
     assert set(metadata["welfare_profiles"]) == {"survival_priority", "health_priority", "balanced"}
     assert metadata["randomness_scheme"] == "event-keyed-v1"
     assert metadata["paired_analysis"]["ci_method"] == "paired_percentile_bootstrap"
@@ -144,6 +150,9 @@ def complete_artifact_frames():
             },
             "randomness_scheme": "event-keyed-v1",
             "metric_schema": "separate-outcomes-v1",
+            "physics_schema": "stock-budgeted-v2",
+            "blocked_policy_count": 0,
+            "inactive_cycle_count": 0,
             "initial_population": 8,
             "final_survivors": 8,
             "final_eligible_voters": 8,
@@ -225,3 +234,45 @@ def test_validation_rejects_hidden_welfare_component_mismatch(complete_artifact_
     corrupted = raw.with_columns(pl.lit(0.0).alias("final_welfare_component_survival"))
     validation = validate_experiment_outputs(corrupted, summary, runs=2, steps=40)
     assert "welfare does not match its component contributions" in validation["errors"]
+
+
+def test_sensitivity_overrides_are_isolated_from_baseline():
+    from pcds.experiments import SENSITIVITY_EXPERIMENTS, _scenario_with_overrides
+    from pcds.scenarios import load_scenario
+
+    baseline = load_scenario(default_scenario_path())
+    before = baseline.model_dump()
+    for name, overrides in SENSITIVITY_EXPERIMENTS.items():
+        condition = _scenario_with_overrides(baseline, overrides)
+        assert condition.model_dump() != before, name
+        assert condition.agents == baseline.agents
+        assert condition.parameters.policy_impacts == baseline.parameters.policy_impacts
+    assert baseline.model_dump() == before
+
+
+def test_validation_checks_declared_sensitivity_conditions(complete_artifact_frames):
+    raw, summary = complete_artifact_frames
+    validation = validate_experiment_outputs(raw, summary, runs=2, steps=40,
+                                             experiment_names={*EXPERIMENTS, "energy_zero"})
+    assert not validation["passed"]
+    assert any("expected" in error for error in validation["errors"])
+
+
+def test_parallel_conditions_preserve_sequential_values_and_order():
+    from pcds.experiments import _condition_frames
+    from pcds.scenarios import load_scenario
+
+    baseline = load_scenario(default_scenario_path())
+    finite_battery = baseline.model_copy(deep=True)
+    finite_battery.resources.energy = 0
+    finite_battery.parameters.energy_replenishment = 0
+    tasks = [("baseline", baseline, 2, 3, 42), ("empty_battery", finite_battery, 2, 3, 42)]
+    sequential = list(_condition_frames(tasks, workers=1))
+    parallel = list(_condition_frames(tasks, workers=2))
+    assert len(parallel) == len(sequential) == 2
+    assert all(left.equals(right) for left, right in zip(sequential, parallel))
+
+
+def test_suite_rejects_invalid_worker_count(tmp_path):
+    with pytest.raises(ValueError, match="workers"):
+        run_experiment_suite(default_scenario_path(), output_dir=tmp_path, workers=0)

@@ -1,0 +1,35 @@
+{
+  "passed": true,
+  "errors": [],
+  "warnings": [],
+  "checks": {
+    "expected_raw_rows": 5600,
+    "observed_raw_rows": 5600,
+    "expected_summary_rows": 56,
+    "observed_summary_rows": 56,
+    "experiments": [
+      "energy_high",
+      "energy_low",
+      "energy_zero",
+      "environmental_shocks",
+      "equal_accuracy",
+      "expertise_imbalance",
+      "fixed_preferences",
+      "high_trust",
+      "low_hazard",
+      "low_trust",
+      "moderate_scarcity",
+      "severe_scarcity",
+      "treatment_high_cost",
+      "treatment_low_cost"
+    ],
+    "rules": [
+      "approval",
+      "expert_delegation",
+      "liquid_democracy",
+      "majority"
+    ],
+    "runs": 100,
+    "steps": 40
+  }
+}

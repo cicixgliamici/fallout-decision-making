@@ -15,12 +15,17 @@ pcds compare --steps 30 --runs 20 --output results/comparison.csv
 Run the reviewer-oriented suite:
 
 ```bash
-pcds suite --steps 40 --runs 100 --output-dir results
+pcds suite --sensitivity --workers 4 --steps 40 --runs 100 --seed 42 --output-dir results/research_review_2026-10-14
 ```
 
-The suite includes:
+The default suite retains eight conditions. `--sensitivity` adds six physical
+probes (energy generation 0/1/4, treatment cost 0.5/2, and shock probability
+0.05), for 14 conditions total. See the [study protocol](study_protocol.md)
+for the rationale, fixed ranges, and inference limits.
 
-- moderate scarcity baseline;
+The original conditions are:
+
+- authored baseline (legacy identifier `moderate_scarcity`; outcomes can be severe);
 - fixed-preference baseline;
 - adaptive evaluation with equal specialist and general accuracy;
 - severe scarcity;
@@ -69,12 +74,14 @@ references, profile definitions, directions, and `separate-outcomes-v1`. See
 
 | Suite output | What it contains | How to use it |
 | --- | --- | --- |
-| `suite_report.md` | A dashboard, aggregate tables, and validation summary. | Start here, reading survival and health beside representation. |
+| `suite_report.md` | A reading guide, readable outcome/paired tables, figures, coverage, and interpretation limits. | Start here, reading survival and health beside representation. |
 | `suite_raw.csv` | Final outcomes and diagnostics for each rule/condition/seed. | Inspect individual trials rather than only averages. |
 | `suite_paired_differences.csv` | Baseline value, rule value, and their difference for each metric and matched seed. | Check the elementary observations supporting an effect estimate. |
 | `suite_effects_vs_majority.csv` | Mean differences, intervals, directions, and defined-pair coverage. | Assess one stated comparison and its uncertainty. |
 | `suite_summary.csv` | Means, descriptive interval half-widths, and defined-run counts by rule/condition. | Do not treat separate-rule intervals as intervals on differences. |
 | `suite_metadata.json` | Scenario settings, versions, schemas, and analysis choices. | Keep this with shared results so assumptions can be reconstructed. |
+| `survival_by_condition.png` | Survival means on a fixed 0-100 scale. | Compare condition dependence without an overall institution ranking. |
+| `baseline_paired_effects.png` | Four baseline outcomes with paired intervals and pair coverage. | Distinguish estimated direction from uncertainty and selection. |
 | `suite_validation.json` | Consistency checks and warnings. | PASS means those checks succeeded, not that assumptions are realistic. |
 
 The CLI `run` prints a final summary; suite CSV files do not archive every round.
@@ -85,3 +92,9 @@ Dashboard numbers are rounded. `n` beside a conditional mean counts defined runs
 while `n_pairs` in an effect table counts seeds defined under both compared rules.
 These counts need not be equal. For example, high health among a few surviving
 runs is not evidence of high health across every initial community.
+
+The metadata also records normalized source-content SHA-256 hashes, including
+uncommitted code, and the primary outcome set. Charts and the report are generated
+from the same validated tables and do not alter trajectories. See
+[current results](current_results.md) for the dated interpretation and retained
+evidence snapshot. Verbose CSV dumps remain separate downloads.
