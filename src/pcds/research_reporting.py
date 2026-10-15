@@ -1,4 +1,9 @@
-"""Present observed outcomes and paired uncertainty without inventing a winner."""
+"""Present observed outcomes and paired uncertainty without inventing a winner.
+
+This module consumes existing Polars result tables; it never reruns a trajectory.
+Tables retain coverage and figures retain metric scales, so presentation choices
+cannot silently turn conditional evidence into an all-population claim.
+"""
 
 from __future__ import annotations
 
@@ -46,6 +51,7 @@ def _condition_order(raw: pl.DataFrame) -> list[str]:
 
 
 def _value(value: float | None, scale: float = 1.0) -> str:
+    """Scale only defined display values; retain missing estimates as N/A."""
     return "N/A" if value is None else f"{scale * value:.1f}"
 
 
@@ -197,6 +203,8 @@ def _save_figure(figure: Figure, path: Path) -> None:
 def survival_figure(raw: pl.DataFrame, output: Path) -> None:
     """Keep a fixed 0-100 scale and show values so small survival is not exaggerated."""
     conditions = _condition_order(raw)
+    # Rows are conditions and columns are rules. Missing means become NaN for
+    # display, rather than a fabricated zero-survival observation.
     values = np.empty((len(conditions), len(RULE_LABELS)))
     for i, condition in enumerate(conditions):
         for j, rule in enumerate(RULE_LABELS):

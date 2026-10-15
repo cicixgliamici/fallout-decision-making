@@ -1,6 +1,10 @@
 """Typed records for members, policy effects, settings, and round observations.
 
 Validation checks declared data bounds; it does not establish realistic assumptions.
+
+Agent and CommunityState hold the mutable world. Parameter models describe the
+assumed mechanisms; RoundResult records their measured consequences. Pydantic
+validates construction, while simulation code maintains transition invariants.
 """
 
 from __future__ import annotations
@@ -36,6 +40,8 @@ class Policy(str, Enum):
     EXPLORATION = "exploration"
 
 
+# Every role maps to one information domain. Several roles can share a domain;
+# a role does not grant extra ballots or an automatic right to receive delegation.
 EXPERTISE: dict[Role, Policy] = {
     Role.FARMER: Policy.FARMING,
     Role.DOCTOR: Policy.MEDICINE,
@@ -61,6 +67,8 @@ class Agent(BaseModel):
     health: float = Field(default=1.0, ge=0.0, le=1.0)
     risk_aversion: float = Field(default=0.5, ge=0.0, le=1.0)
     cooperation: float = Field(default=0.5, ge=0.0, le=1.0)
+    # preferences is the current ordinal ranking; utility_weights stores private
+    # assessment scores in adaptive mode. Neither is the public welfare index.
     preferences: List[Policy]
     utility_weights: Dict[Policy, float] = Field(default_factory=dict)
     general_accuracy: float | None = Field(default=None, ge=0.0, le=1.0)
@@ -226,6 +234,8 @@ class SimulationParameters(BaseModel):
     decision: DecisionParameters = Field(default_factory=DecisionParameters)
     metrics: MetricParameters = Field(default_factory=MetricParameters)
     shock: EnvironmentalShock = Field(default_factory=EnvironmentalShock)
+    # These constructor defaults are not necessarily the authored baseline:
+    # scenario JSON can replace them, so presentations should cite the loaded input.
     policy_impacts: Dict[Policy, PolicyImpact] = Field(
         default_factory=lambda: {
             Policy.FARMING: PolicyImpact(energy_cost=2.0, food_delta=14.0, water_delta=-3.0),
@@ -244,6 +254,26 @@ class SimulationParameters(BaseModel):
     )
 
 
+class GovernanceBackend(BaseModel):
+    """Actual institutional-check backend, separate from Python's voting resolver.
+
+    Disabled checks and a Python fallback have different semantics and identities.
+    PySwip records the installed bridge version; the SWI-Prolog version is read
+    from the actual interpreter. A missing SWI version means none was identified.
+    """
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+    mode: Literal["disabled", "optional", "required"] = "disabled"
+    backend: Literal["python", "python_fallback", "swipl"] = "python"
+    swipl_version: str | None = None
+    pyswip_version: str | None = None
+    rules_sha256: str | None = None
+    fallback_reason: str | None = None
+    resolver: Literal["python", "prolog"] = "python"
+    resolver_sha256: str | None = None
+    contract_version: str | None = None
+
+
 class RoundResult(BaseModel):
     """One recorded round, combining two explicitly different observation times.
 
@@ -253,6 +283,7 @@ class RoundResult(BaseModel):
 
     step: int
     rule: str
+    governance: GovernanceBackend = Field(default_factory=GovernanceBackend)
     selected_policy: Policy
     physics_schema: str = PHYSICS_SCHEMA
     policy_executed: bool = True
@@ -266,6 +297,8 @@ class RoundResult(BaseModel):
     preference_changes: int = 0
     mean_assessment_error: float = 0.0
     simulation_seed: int = 0
+    # Potential outside exposure is retained even for dead members. These values
+    # audit shared conditions; they are not each member's realized health loss.
     environmental_shock_draw: float = 0.0
     environmental_health_damage: Dict[str, float] = Field(default_factory=dict)
     survivors: int = 0
@@ -278,6 +311,8 @@ class RoundResult(BaseModel):
     delegation_concentration: float | None = None
     max_vote_share: float | None = None
     delegated_vote_share: float | None = None
+    # Each original eligible ballot has one terminal holder. vote_weights is the
+    # count by holder, allowing readers to reconstruct concentration from votes.
     vote_representatives: Dict[str, str] = Field(default_factory=dict)
     vote_weights: Dict[str, int] = Field(default_factory=dict)
     welfare_components: Dict[str, float] = Field(default_factory=dict)

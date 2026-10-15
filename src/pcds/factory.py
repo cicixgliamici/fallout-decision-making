@@ -1,6 +1,10 @@
 """Construct community members and possible trust relationships.
 
 Generated populations are synthetic assumptions, not observations of real people.
+
+Population generation and network generation each create a local seeded RNG.
+Their draws do not advance the event streams later used by the simulation.
+The resulting trust graph stays fixed; eligibility filters its usable recipients.
 """
 
 from __future__ import annotations
@@ -121,6 +125,8 @@ def create_trust_graph(
     for agent in agent_list:
         graph.add_node(agent.name, role=agent.role.value, expertise=agent.expertise.value)
 
+    # Consider ordered pairs because a trusting b does not imply b trusting a.
+    # Topology changes link probability; accepted links receive a separate weight.
     for a in agent_list:
         for b in agent_list:
             if a.name == b.name:

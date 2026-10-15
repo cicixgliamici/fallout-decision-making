@@ -1,23 +1,41 @@
 """Expose the research pipeline as small commands: run, compare, and suite.
 
 Printed outcomes and exported coverage help readers inspect more than one aggregate score.
+
+This is the input/output boundary: Typer parses options, research modules compute
+results, and this module writes files or prints summaries. run inspects one
+trajectory; compare repeats rules; suite also varies experimental conditions.
 """
 
 from __future__ import annotations
 
+from contextlib import contextmanager
 from pathlib import Path
 
 import polars as pl
 import typer
 
 from pcds.experiments import run_experiment_suite, summarize_rules
+from pcds.governance_contract import GovernanceContractError, parse_request
+from pcds.governance_reference import handle_governance_request, verify_governance_response
 from pcds.models import RoundResult
 from pcds.narrative import export_event_log, load_profile, render_report
 from pcds.paired_analysis import build_paired_differences, summarize_paired_effects
+from pcds.prolog_rules import PrologBackendError
 from pcds.scenarios import default_scenario_path, load_scenario
 from pcds.simulation import compare_rules, run_simulation
 
 app = typer.Typer(help="Post-Crisis Collective Decision Simulator")
+
+
+@contextmanager
+def _backend_errors():
+    """Expose backend failures as actionable CLI errors without successful artifacts."""
+    try:
+        yield
+    except PrologBackendError as error:
+        typer.echo(f"Governance backend error: {error}", err=True)
+        raise typer.Exit(code=1) from error
 
 
 @app.command()
@@ -30,6 +48,9 @@ def run(
     seed: int = typer.Option(42, help="Random seed."),
     scenario: Path = typer.Option(default_scenario_path(), help="Scenario JSON path."),
     use_prolog: bool = typer.Option(False, help="Use SWI-Prolog governance rules when available."),
+    require_prolog: bool = typer.Option(
+        False, help="Require pinned SWI-Prolog and PySwip; never use a fallback."
+    ),
     report: Path | None = typer.Option(None, help="Write a deterministic text report."),
     event_log: Path | None = typer.Option(None, help="Write a neutral JSON event trace."),
     profile: str = typer.Option("vault47", help="Report profile: vault47, neutral, or JSON path."),
@@ -43,15 +64,19 @@ def run(
     if report and event_log and report.resolve() == event_log.resolve():
         raise typer.BadParameter("report and event log must use different paths")
     scenario_configuration = load_scenario(scenario)
-    results = run_simulation(
-        rule=rule,
-        steps=steps,
-        n_agents=agents,
-        seed=seed,
-        scenario=scenario_configuration,
-        use_prolog=use_prolog,
-        record_events=report is not None or event_log is not None,
-    )
+    # Event recording is needed for factual artifacts, but does not change the
+    # simulation's random draws or its numerical trajectory.
+    with _backend_errors():
+        results = run_simulation(
+            rule=rule,
+            steps=steps,
+            n_agents=agents,
+            seed=seed,
+            scenario=scenario_configuration,
+            use_prolog=use_prolog,
+            require_prolog=require_prolog,
+            record_events=report is not None or event_log is not None,
+        )
     _print_run_summary(results[-1])
     if report:
         _write_artifact(report, render_report(results, narrative_profile))
@@ -64,7 +89,7 @@ def run(
             export_event_log(
                 results,
                 scenario_configuration.model_dump(mode="json"),
-                governance_checks_enabled=use_prolog,
+                governance_checks_enabled=use_prolog or require_prolog,
             ),
         )
 
@@ -72,6 +97,11 @@ def run(
 def _print_run_summary(last: RoundResult) -> None:
     """Keep the established terminal summary separate from optional artifacts."""
     typer.echo(f"Rule: {last.rule}")
+    typer.echo(f"Governance checks: {last.governance.mode} | Backend: {last.governance.backend}")
+    if last.governance.swipl_version:
+        typer.echo(f"SWI-Prolog version: {last.governance.swipl_version}")
+    if last.governance.fallback_reason:
+        typer.echo(f"Prolog fallback reason: {last.governance.fallback_reason}")
     typer.echo(f"Selected policy at final step: {last.selected_policy.value}")
     typer.echo(f"Policy executed: {last.policy_executed}")
     if last.policy_block_reason:
@@ -111,11 +141,17 @@ def compare(
     seed: int = typer.Option(42, help="Random seed."),
     scenario: Path = typer.Option(default_scenario_path(), help="Scenario JSON path."),
     output: Path = typer.Option(Path("results/comparison.csv"), help="CSV output path."),
+    use_prolog: bool = typer.Option(False, help="Enable checks with a recorded fallback if needed."),
+    require_prolog: bool = typer.Option(False, help="Require the pinned real Prolog backend."),
 ) -> None:
     """Export matched rule outcomes, per-seed differences, and paired effect intervals."""
     output.parent.mkdir(parents=True, exist_ok=True)
-    df = compare_rules(runs=runs, steps=steps, n_agents=agents, seed=seed, scenario=scenario)
+    with _backend_errors():
+        df = compare_rules(runs=runs, steps=steps, n_agents=agents, seed=seed, scenario=scenario,
+                           use_prolog=use_prolog, require_prolog=require_prolog)
     df.write_csv(output)
+    # A standalone comparison is one condition. Label it explicitly to reuse the
+    # same pairing keys as the multi-condition research suite.
     paired = build_paired_differences(df.with_columns(pl.lit("comparison").alias("experiment")))
     effects = summarize_paired_effects(paired, seed=seed)
     paired_path = output.with_name(f"{output.stem}_paired_differences.csv")
@@ -149,19 +185,55 @@ def suite(
     seed: int = typer.Option(42, help="Base random seed."),
     sensitivity: bool = typer.Option(False, help="Add six physical-assumption sensitivity probes."),
     workers: int = typer.Option(1, min=1, help="Independent worker processes for suite conditions."),
+    use_prolog: bool = typer.Option(False, help="Enable checks with a recorded fallback if needed."),
+    require_prolog: bool = typer.Option(False, help="Require the pinned real Prolog backend."),
 ) -> None:
     """Run all predefined conditions and report where their review artifacts were written."""
-    paths = run_experiment_suite(
-        scenario_path=scenario,
-        output_dir=output_dir,
-        runs=runs,
-        steps=steps,
-        seed=seed,
-        sensitivity=sensitivity,
-        workers=workers,
-    )
+    with _backend_errors():
+        paths = run_experiment_suite(
+            scenario_path=scenario,
+            output_dir=output_dir,
+            runs=runs,
+            steps=steps,
+            seed=seed,
+            sensitivity=sensitivity,
+            workers=workers,
+            use_prolog=use_prolog,
+            require_prolog=require_prolog,
+        )
     for label, path in paths.items():
         typer.echo(f"{label}: {path}")
+
+
+@app.command("govern")
+def govern(
+    request: Path = typer.Option(..., exists=True, dir_okay=False, help="Governance request JSON."),
+    output: Path = typer.Option(..., help="Decision/certificate or explicit error JSON."),
+) -> None:
+    """Evaluate the versioned contract using the current Python reference resolver."""
+    if request.resolve() == output.resolve():
+        raise typer.BadParameter("request and output must use different paths")
+    response = handle_governance_request(request.read_text(encoding="utf-8"))
+    _write_artifact(output, response.model_dump_json(indent=2) + "\n")
+    if response.status == "error":
+        typer.echo(f"Governance contract error: {response.error.code}: {response.error.message}", err=True)
+        raise typer.Exit(code=1)
+    typer.echo("Python reference decision written; certificate has not been checked by Lean.")
+
+
+@app.command("check-governance")
+def check_governance(
+    request: Path = typer.Option(..., exists=True, dir_okay=False, help="Original request JSON."),
+    response: Path = typer.Option(..., exists=True, dir_okay=False, help="Decision/certificate JSON."),
+) -> None:
+    """Check witness conformance in Python; no Prolog inference or Lean proof is claimed."""
+    try:
+        parsed = parse_request(request.read_text(encoding="utf-8"))
+        verify_governance_response(parsed, response.read_text(encoding="utf-8"))
+    except GovernanceContractError as error:
+        typer.echo(f"Governance contract error: {error.problem.code}: {error}", err=True)
+        raise typer.Exit(code=1) from error
+    typer.echo("Certificate conforms to the Python contract checker; no Lean verification performed.")
 
 
 if __name__ == "__main__":

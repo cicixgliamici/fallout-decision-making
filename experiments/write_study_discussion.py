@@ -1,4 +1,9 @@
-"""Refresh the dated reader-facing discussion from retained evidence tables."""
+"""Refresh the dated reader-facing discussion from retained evidence tables.
+
+This is a template for a specific historical study, not a general result analyzer.
+Numerical cells come from retained CSV files; some interpretation is authored
+text tied to that study and needs human review when the evidence changes.
+"""
 
 from __future__ import annotations
 
@@ -16,12 +21,14 @@ def number(value: float | None, scale: float = 100) -> str:
 
 
 def effect_cell(frame: pl.DataFrame, rule: str, metric: str) -> str:
+    """Display a paired difference, its interval, and defined/total trial coverage."""
     row = frame.filter((pl.col("rule") == rule) & (pl.col("metric") == metric)).row(0, named=True)
     values = [number(row[key]) for key in ("absolute_delta", "ci95_lower", "ci95_upper")]
     return f"{values[0]} [{values[1]}, {values[2]}]; {row['n_pairs']}/{row['n_seed_pairs']}"
 
 
 def baseline_table(raw: pl.DataFrame) -> str:
+    """Summarize an already-filtered baseline block without mixing conditions."""
     lines = ["| Rule | Survival % | Extinct / runs | Population health (0-100) |",
              "| --- | ---: | ---: | ---: |"]
     for rule, label in RULE_LABELS.items():
@@ -33,6 +40,7 @@ def baseline_table(raw: pl.DataFrame) -> str:
 
 
 def material_effect_table(main: pl.DataFrame, holdout: pl.DataFrame) -> str:
+    """Keep main-study and separate-block estimates beside each other, without pooling."""
     lines = ["| Rule minus plurality | Baseline survival | Baseline population health | Separate-block survival |",
              "| --- | --- | --- | --- |"]
     for rule, label in RULE_LABELS.items():
@@ -45,6 +53,7 @@ def material_effect_table(main: pl.DataFrame, holdout: pl.DataFrame) -> str:
 
 
 def sensitivity_table(raw: pl.DataFrame, steps: int) -> str:
+    """Show the range of rule means within each condition, not individual-trial extremes."""
     names = ["moderate_scarcity", "energy_zero", "energy_low", "energy_high",
              "treatment_low_cost", "treatment_high_cost", "low_hazard", "environmental_shocks"]
     lines = ["| Condition | Survival range across rules % | Extinct / runs | Blocked / active cycles |",

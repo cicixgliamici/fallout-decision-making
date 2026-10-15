@@ -1,4 +1,9 @@
-"""Record neutral facts without inspecting or advancing any random generator."""
+"""Record neutral facts without inspecting or advancing any random generator.
+
+The engine supplies observed scalar values at each transition. The recorder
+orders them within a round; it neither applies changes nor infers fictional
+causes. The pair (step, sequence) locates an event in a complete trajectory.
+"""
 
 from __future__ import annotations
 
@@ -61,6 +66,11 @@ class EventRecorder:
         requested_change: float | None = None,
         details: dict[str, float] | None = None,
     ) -> None:
+        """Append an observation; requested_change may differ from after minus before.
+
+        A loss requested from an empty stock realizes zero loss. Keeping both
+        amounts lets a report explain clipping without inventing missing reserves.
+        """
         # Capture scalars and copy details so later world changes cannot rewrite history.
         self.events.append(
             SimulationEvent(

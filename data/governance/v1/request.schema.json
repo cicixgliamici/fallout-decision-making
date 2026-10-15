@@ -1,0 +1,229 @@
+{
+  "$defs": {
+    "ExactValue": {
+      "additionalProperties": false,
+      "description": "Nonnegative reduced fraction; transport never rounds binary64 boundaries.",
+      "properties": {
+        "numerator": {
+          "minimum": 0,
+          "title": "Numerator",
+          "type": "integer"
+        },
+        "denominator": {
+          "exclusiveMinimum": 0,
+          "title": "Denominator",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "numerator",
+        "denominator"
+      ],
+      "title": "ExactValue",
+      "type": "object"
+    },
+    "Policy": {
+      "description": "The four available collective actions; declaration order also breaks score ties.",
+      "enum": [
+        "farming",
+        "medicine",
+        "defense",
+        "exploration"
+      ],
+      "title": "Policy",
+      "type": "string"
+    },
+    "ResidentSnapshot": {
+      "additionalProperties": false,
+      "description": "Only decision-relevant member fields; health and private scores stay upstream.",
+      "properties": {
+        "name": {
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "role": {
+          "$ref": "#/$defs/Role"
+        },
+        "alive": {
+          "title": "Alive",
+          "type": "boolean"
+        },
+        "sanctioned": {
+          "title": "Sanctioned",
+          "type": "boolean"
+        },
+        "ranking": {
+          "items": {
+            "$ref": "#/$defs/Policy"
+          },
+          "maxItems": 4,
+          "minItems": 4,
+          "title": "Ranking",
+          "type": "array"
+        }
+      },
+      "required": [
+        "name",
+        "role",
+        "alive",
+        "sanctioned",
+        "ranking"
+      ],
+      "title": "ResidentSnapshot",
+      "type": "object"
+    },
+    "ResourceSnapshot": {
+      "additionalProperties": false,
+      "description": "Bind shared stocks without introducing policy costs or physical transitions.",
+      "properties": {
+        "food": {
+          "$ref": "#/$defs/ExactValue"
+        },
+        "water": {
+          "$ref": "#/$defs/ExactValue"
+        },
+        "medicine": {
+          "$ref": "#/$defs/ExactValue"
+        },
+        "energy": {
+          "$ref": "#/$defs/ExactValue"
+        },
+        "security": {
+          "$ref": "#/$defs/ExactValue"
+        }
+      },
+      "required": [
+        "food",
+        "water",
+        "medicine",
+        "energy",
+        "security"
+      ],
+      "title": "ResourceSnapshot",
+      "type": "object"
+    },
+    "Role": {
+      "description": "A member role identifies a specialist policy domain, not a privileged voting right.",
+      "enum": [
+        "doctor",
+        "farmer",
+        "engineer",
+        "guard",
+        "scavenger",
+        "elder"
+      ],
+      "title": "Role",
+      "type": "string"
+    },
+    "TrustLink": {
+      "additionalProperties": false,
+      "description": "Directed edge; list position preserves the legacy equal-trust tie-breaker.",
+      "properties": {
+        "source": {
+          "minLength": 1,
+          "title": "Source",
+          "type": "string"
+        },
+        "target": {
+          "minLength": 1,
+          "title": "Target",
+          "type": "string"
+        },
+        "weight": {
+          "$ref": "#/$defs/ExactValue"
+        }
+      },
+      "required": [
+        "source",
+        "target",
+        "weight"
+      ],
+      "title": "TrustLink",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Complete inputs for the built-in governance semantics, including meaningful order.",
+  "properties": {
+    "schema_version": {
+      "const": "pcds-governance-v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "decision_id": {
+      "minLength": 1,
+      "title": "Decision Id",
+      "type": "string"
+    },
+    "rule": {
+      "enum": [
+        "majority",
+        "approval",
+        "expert_delegation",
+        "liquid_democracy"
+      ],
+      "title": "Rule",
+      "type": "string"
+    },
+    "institutional_checks": {
+      "default": false,
+      "title": "Institutional Checks",
+      "type": "boolean"
+    },
+    "approval_k": {
+      "default": 2,
+      "maximum": 2,
+      "minimum": 2,
+      "title": "Approval K",
+      "type": "integer"
+    },
+    "delegation_max_depth": {
+      "default": 3,
+      "maximum": 3,
+      "minimum": 3,
+      "title": "Delegation Max Depth",
+      "type": "integer"
+    },
+    "policy_order": {
+      "default": [
+        "farming",
+        "medicine",
+        "defense",
+        "exploration"
+      ],
+      "items": {
+        "$ref": "#/$defs/Policy"
+      },
+      "title": "Policy Order",
+      "type": "array"
+    },
+    "residents": {
+      "items": {
+        "$ref": "#/$defs/ResidentSnapshot"
+      },
+      "title": "Residents",
+      "type": "array"
+    },
+    "trust_links": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/TrustLink"
+      },
+      "title": "Trust Links",
+      "type": "array"
+    },
+    "resources": {
+      "$ref": "#/$defs/ResourceSnapshot"
+    }
+  },
+  "required": [
+    "schema_version",
+    "decision_id",
+    "rule",
+    "residents",
+    "resources"
+  ],
+  "title": "GovernanceRequest",
+  "type": "object"
+}

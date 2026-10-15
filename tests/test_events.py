@@ -176,7 +176,14 @@ def test_incomplete_state_change_cannot_enter_the_typed_event_log():
 
 def test_institutional_override_preserves_both_requested_and_applied_policy(monkeypatch):
     class MedicalRestriction:
+        from pcds.models import GovernanceBackend
+        info = GovernanceBackend(mode="optional", backend="python_fallback",
+                                 fallback_reason="controlled test double")
+
         # A controlled bridge isolates the recording boundary from optional SWI-Prolog.
+        def __init__(self, *, required=False):
+            pass
+
         def sync_world(self, agents, graph, state):
             pass
 

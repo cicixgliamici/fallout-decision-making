@@ -1,0 +1,862 @@
+{
+  "event_schema": "simulation-events-v2",
+  "randomness_scheme": "event-keyed-v1",
+  "metric_schema": "separate-outcomes-v1",
+  "physics_schema": "stock-budgeted-v2",
+  "governance": {
+    "mode": "required",
+    "backend": "swipl",
+    "swipl_version": "9.2.9",
+    "pyswip_version": "0.3.3",
+    "rules_sha256": "c528451c697b8ff5eeb169a8066caff68d596df32479a7df7f490c2818932846",
+    "fallback_reason": null
+  },
+  "rounds": [
+    {
+      "step": 0,
+      "rule": "expert_delegation",
+      "governance": {
+        "mode": "required",
+        "backend": "swipl",
+        "swipl_version": "9.2.9",
+        "pyswip_version": "0.3.3",
+        "rules_sha256": "c528451c697b8ff5eeb169a8066caff68d596df32479a7df7f490c2818932846",
+        "fallback_reason": null
+      },
+      "selected_policy": "defense",
+      "physics_schema": "stock-budgeted-v2",
+      "policy_executed": true,
+      "policy_block_reason": null,
+      "survival_rate": 1.0,
+      "welfare": 0.9853570305754984,
+      "resilience": 1.0157,
+      "inequality": 0.05082198435066324,
+      "resources": {
+        "food": 99.0,
+        "water": 99.25,
+        "medicine": 49.8,
+        "energy": 46.0,
+        "security": 59.0
+      },
+      "shock_occurred": false,
+      "preference_changes": 3,
+      "mean_assessment_error": 0.0009468707990117192,
+      "simulation_seed": 42,
+      "environmental_shock_draw": 0.31991592091852283,
+      "environmental_health_damage": {
+        "agent_0": 0.0070441454101824496,
+        "agent_1": 0.0005883882372865961,
+        "agent_2": 0.013132489364896041,
+        "agent_3": 0.00023004278988860205,
+        "agent_4": 0.0019741729435013653
+      },
+      "survivors": 5,
+      "initial_population": 5,
+      "survivor_health": 0.9414281223019934,
+      "population_health": 0.9414281223019934,
+      "eligible_voters": 5,
+      "preference_satisfaction": 0.5333333333333333,
+      "prior_preference_satisfaction": 0.4666666666666666,
+      "delegation_concentration": 0.3,
+      "max_vote_share": 0.6,
+      "delegated_vote_share": 0.6,
+      "vote_representatives": {
+        "agent_0": "agent_2",
+        "agent_1": "agent_2",
+        "agent_2": "agent_2",
+        "agent_3": "agent_3",
+        "agent_4": "agent_0"
+      },
+      "vote_weights": {
+        "agent_2": 3,
+        "agent_3": 1,
+        "agent_0": 1
+      },
+      "welfare_components": {
+        "survival": 0.65,
+        "health": 0.23535703057549834,
+        "resources": 0.1
+      },
+      "welfare_sensitivity": {
+        "survival_priority": 0.991214218345299,
+        "health_priority": 0.9736426550358971,
+        "balanced": 0.982428436690598
+      },
+      "events": [
+        {
+          "step": 0,
+          "sequence": 0,
+          "kind": "policy_selected",
+          "subject": "defense",
+          "cause": "vote",
+          "before": null,
+          "after": null,
+          "requested_change": null,
+          "details": {
+            "eligible_voters": 5.0
+          }
+        },
+        {
+          "step": 0,
+          "sequence": 1,
+          "kind": "resource_change",
+          "subject": "energy",
+          "cause": "defense",
+          "before": 50.0,
+          "after": 46.0,
+          "requested_change": -4.0,
+          "details": {}
+        },
+        {
+          "step": 0,
+          "sequence": 2,
+          "kind": "resource_change",
+          "subject": "security",
+          "cause": "defense",
+          "before": 50.0,
+          "after": 59.0,
+          "requested_change": 9.0,
+          "details": {}
+        },
+        {
+          "step": 0,
+          "sequence": 3,
+          "kind": "resource_change",
+          "subject": "food",
+          "cause": "consumption",
+          "before": 100.0,
+          "after": 99.0,
+          "requested_change": -1.0,
+          "details": {}
+        },
+        {
+          "step": 0,
+          "sequence": 4,
+          "kind": "resource_change",
+          "subject": "water",
+          "cause": "consumption",
+          "before": 100.0,
+          "after": 99.25,
+          "requested_change": -0.75,
+          "details": {}
+        },
+        {
+          "step": 0,
+          "sequence": 5,
+          "kind": "resource_change",
+          "subject": "medicine",
+          "cause": "consumption",
+          "before": 50.0,
+          "after": 49.8,
+          "requested_change": -0.2,
+          "details": {}
+        },
+        {
+          "step": 0,
+          "sequence": 6,
+          "kind": "health_damage",
+          "subject": "agent_0",
+          "cause": "environmental_pressure",
+          "before": 0.9362214497887029,
+          "after": 0.9291773043785204,
+          "requested_change": -0.0070441454101824496,
+          "details": {
+            "shortage": 0.0,
+            "shock": 0.0,
+            "background": 0.0070441454101824496
+          }
+        },
+        {
+          "step": 0,
+          "sequence": 7,
+          "kind": "health_damage",
+          "subject": "agent_1",
+          "cause": "environmental_pressure",
+          "before": 0.8554972866205719,
+          "after": 0.8549088983832853,
+          "requested_change": -0.0005883882372865961,
+          "details": {
+            "shortage": 0.0,
+            "shock": 0.0,
+            "background": 0.0005883882372865961
+          }
+        },
+        {
+          "step": 0,
+          "sequence": 8,
+          "kind": "health_damage",
+          "subject": "agent_2",
+          "cause": "environmental_pressure",
+          "before": 1.0,
+          "after": 0.9868675106351039,
+          "requested_change": -0.013132489364896041,
+          "details": {
+            "shortage": 0.0,
+            "shock": 0.0,
+            "background": 0.013132489364896041
+          }
+        },
+        {
+          "step": 0,
+          "sequence": 9,
+          "kind": "health_damage",
+          "subject": "agent_3",
+          "cause": "environmental_pressure",
+          "before": 0.9383911138464476,
+          "after": 0.938161071056559,
+          "requested_change": -0.00023004278988860205,
+          "details": {
+            "shortage": 0.0,
+            "shock": 0.0,
+            "background": 0.00023004278988860205
+          }
+        },
+        {
+          "step": 0,
+          "sequence": 10,
+          "kind": "health_damage",
+          "subject": "agent_4",
+          "cause": "environmental_pressure",
+          "before": 1.0,
+          "after": 0.9980258270564987,
+          "requested_change": -0.0019741729435013653,
+          "details": {
+            "shortage": 0.0,
+            "shock": 0.0,
+            "background": 0.0019741729435013653
+          }
+        }
+      ]
+    },
+    {
+      "step": 1,
+      "rule": "expert_delegation",
+      "governance": {
+        "mode": "required",
+        "backend": "swipl",
+        "swipl_version": "9.2.9",
+        "pyswip_version": "0.3.3",
+        "rules_sha256": "c528451c697b8ff5eeb169a8066caff68d596df32479a7df7f490c2818932846",
+        "fallback_reason": null
+      },
+      "selected_policy": "defense",
+      "physics_schema": "stock-budgeted-v2",
+      "policy_executed": true,
+      "policy_block_reason": null,
+      "survival_rate": 1.0,
+      "welfare": 0.9837295191773356,
+      "resilience": 1.0394,
+      "inequality": 0.047463945574608105,
+      "resources": {
+        "food": 98.0,
+        "water": 98.5,
+        "medicine": 49.599999999999994,
+        "energy": 44.0,
+        "security": 68.0
+      },
+      "shock_occurred": false,
+      "preference_changes": 2,
+      "mean_assessment_error": 0.0008594899125708752,
+      "simulation_seed": 42,
+      "environmental_shock_draw": 0.9572428751277294,
+      "environmental_health_damage": {
+        "agent_0": 0.005101903895555708,
+        "agent_1": 0.0018961874526786653,
+        "agent_2": 0.012065856615933537,
+        "agent_3": 0.003737073700766366,
+        "agent_4": 0.009749206298319744
+      },
+      "survivors": 5,
+      "initial_population": 5,
+      "survivor_health": 0.9349180767093426,
+      "population_health": 0.9349180767093426,
+      "eligible_voters": 5,
+      "preference_satisfaction": 0.4666666666666666,
+      "prior_preference_satisfaction": 0.4666666666666666,
+      "delegation_concentration": 0.3,
+      "max_vote_share": 0.6,
+      "delegated_vote_share": 0.6,
+      "vote_representatives": {
+        "agent_0": "agent_2",
+        "agent_1": "agent_2",
+        "agent_2": "agent_2",
+        "agent_3": "agent_3",
+        "agent_4": "agent_0"
+      },
+      "vote_weights": {
+        "agent_2": 3,
+        "agent_3": 1,
+        "agent_0": 1
+      },
+      "welfare_components": {
+        "survival": 0.65,
+        "health": 0.23372951917733564,
+        "resources": 0.1
+      },
+      "welfare_sensitivity": {
+        "survival_priority": 0.9902377115064014,
+        "health_priority": 0.9707131345192042,
+        "balanced": 0.9804754230128028
+      },
+      "events": [
+        {
+          "step": 1,
+          "sequence": 0,
+          "kind": "resource_change",
+          "subject": "energy",
+          "cause": "energy_replenishment",
+          "before": 46.0,
+          "after": 48.0,
+          "requested_change": 2.0,
+          "details": {}
+        },
+        {
+          "step": 1,
+          "sequence": 1,
+          "kind": "policy_selected",
+          "subject": "defense",
+          "cause": "vote",
+          "before": null,
+          "after": null,
+          "requested_change": null,
+          "details": {
+            "eligible_voters": 5.0
+          }
+        },
+        {
+          "step": 1,
+          "sequence": 2,
+          "kind": "resource_change",
+          "subject": "energy",
+          "cause": "defense",
+          "before": 48.0,
+          "after": 44.0,
+          "requested_change": -4.0,
+          "details": {}
+        },
+        {
+          "step": 1,
+          "sequence": 3,
+          "kind": "resource_change",
+          "subject": "security",
+          "cause": "defense",
+          "before": 59.0,
+          "after": 68.0,
+          "requested_change": 9.0,
+          "details": {}
+        },
+        {
+          "step": 1,
+          "sequence": 4,
+          "kind": "resource_change",
+          "subject": "food",
+          "cause": "consumption",
+          "before": 99.0,
+          "after": 98.0,
+          "requested_change": -1.0,
+          "details": {}
+        },
+        {
+          "step": 1,
+          "sequence": 5,
+          "kind": "resource_change",
+          "subject": "water",
+          "cause": "consumption",
+          "before": 99.25,
+          "after": 98.5,
+          "requested_change": -0.75,
+          "details": {}
+        },
+        {
+          "step": 1,
+          "sequence": 6,
+          "kind": "resource_change",
+          "subject": "medicine",
+          "cause": "consumption",
+          "before": 49.8,
+          "after": 49.599999999999994,
+          "requested_change": -0.2,
+          "details": {}
+        },
+        {
+          "step": 1,
+          "sequence": 7,
+          "kind": "health_damage",
+          "subject": "agent_0",
+          "cause": "environmental_pressure",
+          "before": 0.9291773043785204,
+          "after": 0.9240754004829647,
+          "requested_change": -0.005101903895555708,
+          "details": {
+            "shortage": 0.0,
+            "shock": 0.0,
+            "background": 0.005101903895555708
+          }
+        },
+        {
+          "step": 1,
+          "sequence": 8,
+          "kind": "health_damage",
+          "subject": "agent_1",
+          "cause": "environmental_pressure",
+          "before": 0.8549088983832853,
+          "after": 0.8530127109306067,
+          "requested_change": -0.0018961874526786653,
+          "details": {
+            "shortage": 0.0,
+            "shock": 0.0,
+            "background": 0.0018961874526786653
+          }
+        },
+        {
+          "step": 1,
+          "sequence": 9,
+          "kind": "health_damage",
+          "subject": "agent_2",
+          "cause": "environmental_pressure",
+          "before": 0.9868675106351039,
+          "after": 0.9748016540191704,
+          "requested_change": -0.012065856615933537,
+          "details": {
+            "shortage": 0.0,
+            "shock": 0.0,
+            "background": 0.012065856615933537
+          }
+        },
+        {
+          "step": 1,
+          "sequence": 10,
+          "kind": "health_damage",
+          "subject": "agent_3",
+          "cause": "environmental_pressure",
+          "before": 0.938161071056559,
+          "after": 0.9344239973557926,
+          "requested_change": -0.003737073700766366,
+          "details": {
+            "shortage": 0.0,
+            "shock": 0.0,
+            "background": 0.003737073700766366
+          }
+        },
+        {
+          "step": 1,
+          "sequence": 11,
+          "kind": "health_damage",
+          "subject": "agent_4",
+          "cause": "environmental_pressure",
+          "before": 0.9980258270564987,
+          "after": 0.9882766207581789,
+          "requested_change": -0.009749206298319744,
+          "details": {
+            "shortage": 0.0,
+            "shock": 0.0,
+            "background": 0.009749206298319744
+          }
+        }
+      ]
+    },
+    {
+      "step": 2,
+      "rule": "expert_delegation",
+      "governance": {
+        "mode": "required",
+        "backend": "swipl",
+        "swipl_version": "9.2.9",
+        "pyswip_version": "0.3.3",
+        "rules_sha256": "c528451c697b8ff5eeb169a8066caff68d596df32479a7df7f490c2818932846",
+        "fallback_reason": null
+      },
+      "selected_policy": "defense",
+      "physics_schema": "stock-budgeted-v2",
+      "policy_executed": true,
+      "policy_block_reason": null,
+      "survival_rate": 1.0,
+      "welfare": 0.9738205771482275,
+      "resilience": 0.9790999999999999,
+      "inequality": 0.04718925386124558,
+      "resources": {
+        "food": 85.0,
+        "water": 87.75,
+        "medicine": 45.39999999999999,
+        "energy": 42.0,
+        "security": 71.0
+      },
+      "shock_occurred": true,
+      "preference_changes": 0,
+      "mean_assessment_error": 0.00018464964748674814,
+      "simulation_seed": 42,
+      "environmental_shock_draw": 0.20907415580764221,
+      "environmental_health_damage": {
+        "agent_0": 0.0021118655390087457,
+        "agent_1": 0.007221738023374091,
+        "agent_2": 0.011862722885974215,
+        "agent_3": 0.005765228046774663,
+        "agent_4": 0.0044172860870328335
+      },
+      "survivors": 5,
+      "initial_population": 5,
+      "survivor_health": 0.9036423085929097,
+      "population_health": 0.9036423085929097,
+      "eligible_voters": 5,
+      "preference_satisfaction": 0.4666666666666666,
+      "prior_preference_satisfaction": 0.4666666666666666,
+      "delegation_concentration": 0.3,
+      "max_vote_share": 0.6,
+      "delegated_vote_share": 0.6,
+      "vote_representatives": {
+        "agent_0": "agent_2",
+        "agent_1": "agent_2",
+        "agent_2": "agent_2",
+        "agent_3": "agent_3",
+        "agent_4": "agent_0"
+      },
+      "vote_weights": {
+        "agent_2": 3,
+        "agent_3": 1,
+        "agent_0": 1
+      },
+      "welfare_components": {
+        "survival": 0.65,
+        "health": 0.22591057714822743,
+        "resources": 0.09791
+      },
+      "welfare_sensitivity": {
+        "survival_priority": 0.9845013462889365,
+        "health_priority": 0.9545490388668094,
+        "balanced": 0.9669126925778728
+      },
+      "events": [
+        {
+          "step": 2,
+          "sequence": 0,
+          "kind": "resource_change",
+          "subject": "energy",
+          "cause": "energy_replenishment",
+          "before": 44.0,
+          "after": 46.0,
+          "requested_change": 2.0,
+          "details": {}
+        },
+        {
+          "step": 2,
+          "sequence": 1,
+          "kind": "policy_selected",
+          "subject": "defense",
+          "cause": "vote",
+          "before": null,
+          "after": null,
+          "requested_change": null,
+          "details": {
+            "eligible_voters": 5.0
+          }
+        },
+        {
+          "step": 2,
+          "sequence": 2,
+          "kind": "resource_change",
+          "subject": "energy",
+          "cause": "defense",
+          "before": 46.0,
+          "after": 42.0,
+          "requested_change": -4.0,
+          "details": {}
+        },
+        {
+          "step": 2,
+          "sequence": 3,
+          "kind": "resource_change",
+          "subject": "security",
+          "cause": "defense",
+          "before": 68.0,
+          "after": 77.0,
+          "requested_change": 9.0,
+          "details": {}
+        },
+        {
+          "step": 2,
+          "sequence": 4,
+          "kind": "resource_change",
+          "subject": "food",
+          "cause": "consumption",
+          "before": 98.0,
+          "after": 97.0,
+          "requested_change": -1.0,
+          "details": {}
+        },
+        {
+          "step": 2,
+          "sequence": 5,
+          "kind": "resource_change",
+          "subject": "water",
+          "cause": "consumption",
+          "before": 98.5,
+          "after": 97.75,
+          "requested_change": -0.75,
+          "details": {}
+        },
+        {
+          "step": 2,
+          "sequence": 6,
+          "kind": "resource_change",
+          "subject": "medicine",
+          "cause": "consumption",
+          "before": 49.599999999999994,
+          "after": 49.39999999999999,
+          "requested_change": -0.2,
+          "details": {}
+        },
+        {
+          "step": 2,
+          "sequence": 7,
+          "kind": "shock",
+          "subject": "community",
+          "cause": "external_shock",
+          "before": null,
+          "after": null,
+          "requested_change": null,
+          "details": {
+            "health_damage": 0.025
+          }
+        },
+        {
+          "step": 2,
+          "sequence": 8,
+          "kind": "resource_change",
+          "subject": "food",
+          "cause": "external_shock",
+          "before": 97.0,
+          "after": 85.0,
+          "requested_change": -12.0,
+          "details": {}
+        },
+        {
+          "step": 2,
+          "sequence": 9,
+          "kind": "resource_change",
+          "subject": "water",
+          "cause": "external_shock",
+          "before": 97.75,
+          "after": 87.75,
+          "requested_change": -10.0,
+          "details": {}
+        },
+        {
+          "step": 2,
+          "sequence": 10,
+          "kind": "resource_change",
+          "subject": "medicine",
+          "cause": "external_shock",
+          "before": 49.39999999999999,
+          "after": 45.39999999999999,
+          "requested_change": -4.0,
+          "details": {}
+        },
+        {
+          "step": 2,
+          "sequence": 11,
+          "kind": "resource_change",
+          "subject": "security",
+          "cause": "external_shock",
+          "before": 77.0,
+          "after": 71.0,
+          "requested_change": -6.0,
+          "details": {}
+        },
+        {
+          "step": 2,
+          "sequence": 12,
+          "kind": "health_damage",
+          "subject": "agent_0",
+          "cause": "environmental_pressure",
+          "before": 0.9240754004829647,
+          "after": 0.8969635349439559,
+          "requested_change": -0.027111865539008746,
+          "details": {
+            "shortage": 0.0,
+            "shock": 0.025,
+            "background": 0.0021118655390087457
+          }
+        },
+        {
+          "step": 2,
+          "sequence": 13,
+          "kind": "health_damage",
+          "subject": "agent_1",
+          "cause": "environmental_pressure",
+          "before": 0.8530127109306067,
+          "after": 0.8207909729072326,
+          "requested_change": -0.032221738023374094,
+          "details": {
+            "shortage": 0.0,
+            "shock": 0.025,
+            "background": 0.007221738023374091
+          }
+        },
+        {
+          "step": 2,
+          "sequence": 14,
+          "kind": "health_damage",
+          "subject": "agent_2",
+          "cause": "environmental_pressure",
+          "before": 0.9748016540191704,
+          "after": 0.9379389311331962,
+          "requested_change": -0.03686272288597422,
+          "details": {
+            "shortage": 0.0,
+            "shock": 0.025,
+            "background": 0.011862722885974215
+          }
+        },
+        {
+          "step": 2,
+          "sequence": 15,
+          "kind": "health_damage",
+          "subject": "agent_3",
+          "cause": "environmental_pressure",
+          "before": 0.9344239973557926,
+          "after": 0.903658769309018,
+          "requested_change": -0.030765228046774666,
+          "details": {
+            "shortage": 0.0,
+            "shock": 0.025,
+            "background": 0.005765228046774663
+          }
+        },
+        {
+          "step": 2,
+          "sequence": 16,
+          "kind": "health_damage",
+          "subject": "agent_4",
+          "cause": "environmental_pressure",
+          "before": 0.9882766207581789,
+          "after": 0.958859334671146,
+          "requested_change": -0.029417286087032833,
+          "details": {
+            "shortage": 0.0,
+            "shock": 0.025,
+            "background": 0.0044172860870328335
+          }
+        }
+      ]
+    }
+  ],
+  "scenario_configuration": {
+    "name": "Shelter Alpha",
+    "description": "Vault 47: an isolated colony governance experiment, testing survival and representation under limited resources. Shelter Alpha is the retained technical scenario identifier.",
+    "agents": 5,
+    "resources": {
+      "food": 100.0,
+      "water": 100.0,
+      "medicine": 50.0,
+      "energy": 50.0,
+      "security": 50.0
+    },
+    "policies": [
+      "farming",
+      "medicine",
+      "defense",
+      "exploration"
+    ],
+    "parameters": {
+      "energy_replenishment": 2.0,
+      "energy_capacity": 50.0,
+      "treatment_medicine_per_health": 1.0,
+      "food_consumption": 0.2,
+      "water_consumption": 0.15,
+      "medicine_consumption": 0.04,
+      "scarcity_food_threshold": 0.5,
+      "scarcity_water_threshold": 0.5,
+      "scarcity_medicine_threshold": 0.05,
+      "scarcity_food_damage": 0.05,
+      "scarcity_water_damage": 0.06,
+      "scarcity_medicine_damage": 0.02,
+      "low_security_threshold": 30.0,
+      "low_security_damage": 0.02,
+      "random_health_damage_max": 0.015,
+      "death_threshold": 0.05,
+      "decision": {
+        "mode": "adaptive",
+        "general_accuracy": 0.55,
+        "expert_accuracy": 0.9,
+        "observation_noise": 0.6,
+        "effect_noise": 0.6,
+        "planning_horizon": 3,
+        "preference_weight": 0.01,
+        "reserve_weight": 0.02
+      },
+      "metrics": {
+        "welfare_weights": {
+          "survival": 0.65,
+          "health": 0.25,
+          "resources": 0.1
+        },
+        "resource_reference": {
+          "food": 100.0,
+          "water": 100.0,
+          "medicine": 50.0,
+          "energy": 50.0,
+          "security": 50.0
+        }
+      },
+      "shock": {
+        "probability": 0.22,
+        "food_loss": 12.0,
+        "water_loss": 10.0,
+        "medicine_loss": 4.0,
+        "security_loss": 6.0,
+        "health_damage": 0.025
+      },
+      "policy_impacts": {
+        "farming": {
+          "energy_cost": 2.0,
+          "food_delta": 14.0,
+          "water_delta": 12.0,
+          "medicine_delta": 0.0,
+          "security_delta": 0.0,
+          "health_boost": 0.0,
+          "injury_probability": 0.0,
+          "injury_min": 0.0,
+          "injury_max": 0.0
+        },
+        "medicine": {
+          "energy_cost": 2.0,
+          "food_delta": 0.0,
+          "water_delta": 0.0,
+          "medicine_delta": 8.0,
+          "security_delta": 0.0,
+          "health_boost": 0.08,
+          "injury_probability": 0.0,
+          "injury_min": 0.0,
+          "injury_max": 0.0
+        },
+        "defense": {
+          "energy_cost": 4.0,
+          "food_delta": 0.0,
+          "water_delta": 0.0,
+          "medicine_delta": 0.0,
+          "security_delta": 9.0,
+          "health_boost": 0.0,
+          "injury_probability": 0.0,
+          "injury_min": 0.0,
+          "injury_max": 0.0
+        },
+        "exploration": {
+          "energy_cost": 2.0,
+          "food_delta": 7.0,
+          "water_delta": 5.0,
+          "medicine_delta": 2.5,
+          "security_delta": 0.0,
+          "health_boost": 0.0,
+          "injury_probability": 0.02,
+          "injury_min": 0.08,
+          "injury_max": 0.2
+        }
+      }
+    },
+    "trust_topology": "expertise_clustered",
+    "trust_probability": 0.18,
+    "trust_edges": null,
+    "role_distribution": null
+  },
+  "governance_checks_enabled": true
+}

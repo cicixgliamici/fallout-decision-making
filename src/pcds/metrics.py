@@ -1,6 +1,10 @@
 """Measure survival, health, preference agreement, and actual ballot control.
 
 Report separate dimensions because a low dispersion or high conditional mean can mislead.
+
+These are read-only measurements, never decision inputs. Survival and population
+health use all original members; survivor health uses living members; satisfaction
+and ballot control use the decision-time electorate supplied by the caller.
 """
 
 from __future__ import annotations
@@ -35,6 +39,8 @@ def survivor_health(agents: list[Agent]) -> float | None:
 
 def population_health(agents: list[Agent]) -> float:
     """Retain deaths in the denominator by assigning them zero health."""
+    # With two original members, one survivor at health 0.8 gives survivor health
+    # 0.8 and population health 0.4. This prevents deaths from improving this mean.
     return sum(agent.health for agent in agents if agent.alive) / len(agents) if agents else 0.0
 
 
@@ -99,9 +105,10 @@ def preference_satisfaction(
     policy: Policy,
     priors: dict[str, tuple[Policy, ...]] | None = None,
 ) -> float | None:
-    """Average the implemented policy's normalized rank among eligible voters.
+    """Average the selected policy's normalized rank among eligible voters.
 
     Use current rankings or supplied original priorities; equal rank spacing is a convention.
+    This measures decision agreement even if physical affordability blocks execution.
     """
     voters = [voter for voter in voters if voter.alive and not voter.sanctioned]
     if not voters:
@@ -129,6 +136,8 @@ def delegation_power(representatives: dict[str, str]) -> dict[str, float | None]
             "delegated_vote_share": None,
         }
     shares = [weight / population for weight in Counter(representatives.values()).values()]
+    # Equal control of four ballots gives HHI = 4 * (1/4)^2 = 1/4;
+    # one holder controlling all four gives HHI = 1 before normalization.
     hhi = sum(share * share for share in shares)
     # Squared shares emphasize large blocks of controlled votes. The index uses
     # actual resolved ballot weights, not a member's number of network links.

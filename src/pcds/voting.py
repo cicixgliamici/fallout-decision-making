@@ -1,6 +1,10 @@
 """Choose a policy and record who controls each original ballot.
 
 Selection and power measurement share one resolved trace so their counts agree.
+
+These functions read the electorate and trust graph without changing either.
+A VotingOutcome carries both the winning policy and a voter-to-holder mapping;
+the latter lets metrics measure the very same delegation used in the tally.
 """
 
 from __future__ import annotations
@@ -25,6 +29,8 @@ VOTING_RULES: tuple[VotingRuleName, ...] = (
 class VotingOutcome:
     """The selected policy and the terminal holder of every eligible original ballot."""
 
+    # Example: {"a": "b", "b": "b"} gives b two original ballots. The mapping
+    # records ownership rather than the number of approvals cast on each policy.
     policy: Policy
     representatives: dict[str, str]
 
@@ -147,6 +153,8 @@ def _trusted_experts(
     if not candidates:
         return []
 
+    # Stable sorting retains outgoing-edge order for equal trust. Trust is a
+    # ranking weight here, not a probability that a delegation will happen.
     candidates.sort(key=lambda c: trust_graph[agent.name][c.name].get("trust", 0.0), reverse=True)
     return candidates
 
@@ -162,6 +170,9 @@ def _resolve_delegate(
 
     The original voter is restored on a cycle; no alternative lower-trust exit is invented.
     """
+    # The topic stays the original voter's first choice throughout the chain.
+    # At termination, the holder casts their own current first-choice ballot,
+    # which may favor a different policy from that delegation topic.
     current = agent
     seen = {agent.name}
 
@@ -177,6 +188,8 @@ def _resolve_delegate(
         current = representative
         seen.add(current.name)
 
+    # Exhausting the depth budget keeps the last reached holder. This differs
+    # from detecting a cycle, which restores the original voter above.
     return current
 
 

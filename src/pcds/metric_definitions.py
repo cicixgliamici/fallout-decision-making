@@ -1,6 +1,10 @@
 """Define common output names, interpretation directions, and allowed absences.
 
 A direction describes one indicator, not which institution is best overall.
+
+This registry keeps simulation exports, statistical analysis, and validation in
+agreement about column names. The schema identifies metric semantics, not a
+ranking of governance rules; a delegated share is intentionally descriptive.
 """
 
 # Conditional outcomes remain undefined when their population is absent.

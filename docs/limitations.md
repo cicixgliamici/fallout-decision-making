@@ -61,11 +61,19 @@ does not validate the model or eliminate every possible source of bias.
 ## Optional Layers and Release Readiness
 
 Prolog provides limited optional institutional checks. Its declared delegation
-rules are not used to resolve Python's chains, and real-engine equivalence has
-not been established by the recorded Python-only tests. Lean covers small
+rules are not used to resolve Python's chains. Separate real-engine tests cover
+the bridge's eligibility and permission behavior, while the default Python test
+selection excludes those native checks. Lean covers small
 definitions, not simulator correctness. See [governance scope](rules.md).
 
-Dependencies are not fully pinned, the Lean selector is rolling, and resource
+The [governance contract](governance_contract.md) now supplies explicit input,
+decision, witness, and error semantics with a standalone Python producer/checker.
+Its witnesses are not Lean proofs or backend attestations. Prolog certificate
+production, formal checker soundness, and live-engine adoption remain proposed;
+the current simulator keeps its existing voting path.
+
+Native reference versions and PySwip are pinned; other Python dependencies are
+not fully pinned, and resource
 paths assume a source checkout. Installation away from the checkout and complete
 public-release metadata still need review. A focused [primary-source bibliography and assumption register](research_basis.md)
 and [substantive results discussion](current_results.md) are now supplied.

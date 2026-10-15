@@ -11,8 +11,8 @@ Recommended environment:
 
 - Python 3.11-3.13 as the recommended range; the dated review also passed on 3.14.3;
 - editable install with development dependencies;
-- optional SWI-Prolog for governance integration;
-- optional Lean 4 via elan for the formal core.
+- SWI-Prolog 9.2.9 and PySwip 0.3.3 for required governance integration;
+- Lean 4.19.0 via elan for the separately checked formal core.
 
 Commands:
 
@@ -60,12 +60,34 @@ shared report. Generated result directories are ignored by Git; cloning the
 repository does not supply a previously generated local report.
 
 Commands verify Python behavior in the source checkout. They do not test a
-standalone wheel's data-file discovery or establish that optional SWI-Prolog
-and Lean were checked. The Prolog rules path is also relative to the working
-directory, and the Lean toolchain uses a rolling selector. See the
+standalone wheel's data-file discovery. The default test selection excludes
+native checks; run the separate [Prolog and Lean commands](rules.md#pinned-toolchains-and-separate-checks)
+to establish their coverage. The default Prolog rules path is resolved from the
+source checkout, and the Lean toolchain uses an exact release selector. See the
 [review checklist](artifact_checklist.md) for release work still required.
 
+`--require-prolog` is available on `run`, `compare`, and `suite`. It requires the
+reference runtime versions and rejects fallback. `--use-prolog` retains optional
+loading with a recorded fallback reason. All new observations/CSV exports record
+the effective governance backend, and suite metadata records observed identities
+alongside reference versions. Pairing rejects inconsistent governance identities
+within a condition. Backend choice is part of the experimental treatment:
+enabling institutional policy checks can change outcomes compared with the
+historical Python-only study, even under identical seeds.
+
+The Python-only mechanics and random-event keys are unchanged by this integration
+revision. Historical outcomes remain tied to their recorded revision; their
+metadata must not be rewritten to claim newly tested native coverage. New source
+hashes include the toolchain declarations and Lean sources. Native test results
+describe their explicitly executed environments, not every operating system.
+
 ## Current Reviewer Snapshot
+
+The additive [governance contract](governance_contract.md) can be reproduced
+independently of simulation seeds: `pcds govern` consumes the published JSON
+request and `pcds check-governance` checks its bound response. Its authored
+examples are separate from measured study outputs. These commands currently
+use the Python reference implementation; they do not request Prolog or Lean.
 
 The expanded [study protocol](study_protocol.md) uses 100 replications, 14
 conditions, four rules, and 40 cycles (5,600 trajectories). The original eight

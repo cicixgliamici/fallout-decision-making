@@ -1,6 +1,11 @@
 """Coordinate repeated choices, physical consequences, and measurements.
 
 Decision-time representation and end-of-round health have different populations.
+
+run_simulation owns a trajectory's mutable agents and shared stocks. Helpers
+apply individual physical mechanisms; each RoundResult captures an observation.
+compare_rules repeats complete trajectories and exports their final outcomes.
+Neither function selects narrative vocabulary or writes presentation artifacts.
 """
 
 from __future__ import annotations
@@ -31,7 +36,10 @@ from pcds.metrics import (
     survivor_health,
     welfare_components,
 )
-from pcds.models import PHYSICS_SCHEMA, Agent, CommunityState, Policy, RoundResult, SimulationParameters
+from pcds.models import (
+    PHYSICS_SCHEMA, Agent, CommunityState, GovernanceBackend, Policy, RoundResult,
+    SimulationParameters,
+)
 from pcds.prolog_rules import PrologRuleEngine
 from pcds.randomness import RANDOMNESS_SCHEME, EnvironmentalDraws, event_rng, sample_environment
 from pcds.scenarios import Scenario, default_scenario_path, load_scenario
@@ -50,6 +58,7 @@ def run_simulation(
     use_prolog: bool = False,
     scenario: Scenario | str | Path | None = None,
     record_events: bool = False,
+    require_prolog: bool = False,
 ) -> list[RoundResult]:
     """Run one mechanism over a fixed number of rounds and retain its full trajectory.
 
@@ -77,15 +86,23 @@ def run_simulation(
     parameters = scenario_obj.parameters
     priors = {agent.name: tuple(agent.preferences) for agent in agents}
     # Keep the original rankings separately: current rankings change each round.
-    prolog = PrologRuleEngine() if use_prolog else None
+    # Required mode implies enabled checks and must never silently substitute Python.
+    prolog = PrologRuleEngine(required=require_prolog) if use_prolog or require_prolog else None
+    governance = prolog.info if prolog else GovernanceBackend()
 
+    # Keep every original member in agents, including deaths: names anchor random
+    # events, and the original population remains the survival denominator.
     results: list[RoundResult] = []
 
     for step in range(steps):
+        # Stage 1: prepare outside exposure and the stocks visible to voters.
+        # Sampling exposure now does not apply its damage before the election.
         recorder = EventRecorder(step) if record_events else None
         # A round separates outside conditions, the decision, and its effects.
         environment = sample_environment(run_seed, step, agents, parameters)
         _replenish_energy(agents, state, parameters, recorder)
+        # Stage 2: private assessments become rankings, then the rule aggregates
+        # ballots. Eligibility governs participation, not access to shared supplies.
         preference_changes, assessment_error = update_preferences(
             agents, state, parameters, priors, run_seed, step
         )
@@ -112,15 +129,21 @@ def run_simulation(
         satisfaction = preference_satisfaction(eligible_agents, selected)
         prior_satisfaction = preference_satisfaction(eligible_agents, selected, priors)
         power = delegation_power(outcome.representatives)
+        # Stage 3: institutional permission and physical affordability are separate.
+        # A selected but unaffordable action stays recorded and produces no effects;
+        # environmental consumption and damage still proceed during that round.
         block_reason = _apply_policy(selected, agents, state, run_seed, step, parameters, recorder)
         shock_occurred = _apply_environmental_pressure(
             agents, state, environment, parameters, recorder
         )
 
+        # Stage 4: snapshot values rather than retain the mutable world objects.
+        # The fixed horizon includes post-extinction rounds for aligned comparisons.
         results.append(
             RoundResult(
                 step=step,
                 rule=rule,
+                governance=governance,
                 selected_policy=selected,
                 policy_executed=block_reason is None,
                 policy_block_reason=block_reason,
@@ -154,6 +177,8 @@ def compare_rules(
     n_agents: int | None = None,
     seed: int = 42,
     scenario: Scenario | str | Path | None = None,
+    use_prolog: bool = False,
+    require_prolog: bool = False,
 ) -> pl.DataFrame:
     """Repeat each rule on the same seed schedule and export final outcomes.
 
@@ -176,7 +201,11 @@ def compare_rules(
                 n_agents=n_agents,
                 seed=run_seed,
                 scenario=scenario,
+                use_prolog=use_prolog,
+                require_prolog=require_prolog,
             )
+            # A trial contributes one final observation to inference. Its rounds
+            # are dependent observations, not additional independent replications.
             last = results[-1]
             rows.append(
                 {
@@ -219,6 +248,8 @@ def compare_rules(
                     "randomness_scheme": RANDOMNESS_SCHEME,
                     "metric_schema": METRIC_SCHEMA,
                     "physics_schema": PHYSICS_SCHEMA,
+                    **{f"governance_{key}": value
+                       for key, value in last.governance.model_dump().items()},
                     # Extinct-colony placeholders are inactive observations,
                     # not failed attempts to pay for a policy.
                     "blocked_policy_count": sum(
@@ -233,7 +264,10 @@ def compare_rules(
 
     # Entire conditions can lose their electorate. Preserve numeric nullable
     # types so these conditions can still be concatenated with surviving ones.
-    return pl.DataFrame(rows, schema_overrides={metric: pl.Float64 for metric in NULLABLE_METRICS})
+    return pl.DataFrame(rows, schema_overrides={
+        **{metric: pl.Float64 for metric in NULLABLE_METRICS},
+        **{f"governance_{key}": pl.String for key in GovernanceBackend.model_fields},
+    })
 
 
 def _select_policy(rule: str, agents: list[Agent], trust_graph: nx.DiGraph) -> VotingOutcome:
@@ -390,6 +424,8 @@ def _apply_treatment(
     if not requested_health:
         return
     unit_cost = parameters.treatment_medicine_per_health
+    # Example: enough medicine for half the total requested recovery gives every
+    # patient half their request, rather than favoring the first name in the list.
     coverage = min(1.0, state.medicine / unit_cost / requested_health)
     # Debit only actual capped recovery; unused supply stays available for routine use.
     healed = []
@@ -552,6 +588,9 @@ def _damage_residents(
                     "background": environment.health_damage[agent.name],
                 },
             )
+        # Death status is finalized here, after policy and environmental damage.
+        # Health may remain positive at this numerical threshold; later population
+        # metrics explicitly assign zero to members whose alive flag is False.
         if agent.health <= parameters.death_threshold:
             agent.alive = False
             if recorder:

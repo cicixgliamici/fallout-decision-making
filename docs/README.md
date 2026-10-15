@@ -20,7 +20,7 @@ Operational instructions for AI coding agents live separately in
 | Experiment design and outputs | [Research question](research_question.md), [methods](methods.md), [experiments](experiments.md), [reproducibility](reproducibility.md) |
 | Physical model and measurements | [Model](model.md), [resource balance](resource_balance.md), [physical accounting](physical_accounting.md), [metrics](metrics.md), [glossary](glossary.md) |
 | Vault setting and factual narration | [Protocol](vault_protocol.md), [policy dictionary](policy_dictionary.md), [event reports](event_reports.md), [context architecture](context_architecture.md) |
-| Optional governance layer | [Prolog rules and scope](rules.md) |
+| Governance boundaries | [Prolog rules and scope](rules.md), [versioned governance contract](governance_contract.md) |
 | Review and release | [Project status](project_status.md), [limitations](limitations.md), [artifact checklist](artifact_checklist.md), [presentation guide](presentation_guide.md) |
 | Research argument and assumptions | [Research basis and bibliography](research_basis.md), [ODD model specification](model_specification.md), [study protocol](study_protocol.md) |
 | Latest evidence | [Current results and discussion](current_results.md) |

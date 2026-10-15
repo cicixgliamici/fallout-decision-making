@@ -18,6 +18,8 @@ def main() -> None:
     output_dir = Path("results")
     output_dir.mkdir(parents=True, exist_ok=True)
 
+    # This demonstration deliberately overrides the baseline population. Its
+    # numerical values should not be presented as the default 40-member study.
     df = compare_rules(runs=30, steps=35, n_agents=50, seed=7, scenario=default_scenario_path())
     df.write_csv(output_dir / "comparison.csv")
 

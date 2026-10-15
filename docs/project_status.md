@@ -1,6 +1,6 @@
 # Project Status and Review Readiness
 
-Latest documentation and Python regression check: **2026-10-14**. Historical
+Latest documentation and Python regression check: **2026-10-15**. Historical
 calibration records are dated **2026-10-13**; the new accounting check below
 is dated **2026-10-14**. Each verification applies
 only to its stated configuration and scope.
@@ -20,8 +20,108 @@ empirically grounded scientific study.
 | Metrics | Separate health, survival, satisfaction, and ballot control; explicit welfare assumptions | Normative indices do not define one universally best institution. |
 | Research argument | Primary-source motivation, assumption register, ODD specification, and exploratory protocol | No empirical calibration or comprehensive global sensitivity study. |
 | Reporting | Readable outcome/paired tables, figures, coverage, and source provenance | Visual clarity does not establish external validity. |
-| Prolog | Optional eligibility/admissibility bridge and Python fallback | Real-engine equivalence has not been established by the recorded Python-only check. |
-| Lean | Small definitions and proofs that mainly unpack those definitions | No proof of delegation termination, vote conservation, or simulator correctness. |
+| Prolog | Pinned required mode, recorded backends, and 17 real SWI-Prolog integration checks | Voting/delegation remains Python; native Windows SWI-Prolog was not checked. |
+| Lean | Pinned 4.19.0 toolchain and a separately passing build of the small formal package | No proof of delegation termination, vote conservation, or simulator correctness. |
+
+## Governance Contract: 2026-10-15
+
+- Implemented [contract version 1](governance_contract.md): decision-time input,
+  full election/permission output, request-bound ballot witnesses, structured
+  errors, and complete semantics for the current built-in profile. Published
+  [request/response schemas and examples](../data/governance/v1).
+- Added `governance_contract.py` and `governance_reference.py`. The producer
+  wraps the existing Python voting resolver; an independent checker validates
+  input binding, complete electorate/ballot coverage, greedy paths, cycle and
+  depth stopping, all scores, deterministic ties, and post-election overrides.
+- `pcds govern` and `pcds check-governance` expose this standalone boundary.
+  They do not replace the live simulation path, load Prolog, or invoke Lean.
+  Fractions preserve the exact numeric values of existing finite Python stocks
+  and trust weights; no rounding or new physical mechanism was introduced.
+- Preserved policy declaration order, outgoing-edge order on equal trust,
+  fixed original delegation topics, original-voter cycle fallback, the three-hop
+  budget, empty-electorate defaults, and permission overrides after tallying.
+  The input domain explicitly excludes malformed rankings and custom k/depth
+  settings; existing scenario/helper interfaces were not tightened.
+- **287 ordinary Python tests passed**, with 18 native checks deselected;
+  **17 real SWI-Prolog tests passed** in WSL/Python 3.12.3 with the pinned
+  runtime. This includes one new contract-versus-core-rule integration test;
+  delegation certificate production remains Python. The 79 contract tests cover
+  actual adaptive-round comparisons, boundary values, CLI round trips, published
+  schema/example consistency, and certificate tampering. Ruff and whitespace
+  checks passed. Lean sources were unchanged and their separate build was not
+  rerun in this step; the earlier dated Lean check remains its evidence.
+- Existing numerical research outputs need no regeneration for a mechanic
+  change: the live voting and simulation modules were not changed in this step.
+  Source hashes include the new modules, so historical snapshots retain their
+  recorded source identities. No full research study or hosted CI was run.
+- The [worked request](../data/governance/v1/example_request.json) and
+  [response](../data/governance/v1/example_response.json) demonstrate an
+  intermediate-node cycle and a forbidden winning policy replaced after the
+  vote. These are authored decision examples, not empirical results or a
+  measured simulation trajectory. Validation provenance is retained in
+  [the contract check record](evidence/2026-10-15/governance_contract_validation.json).
+- Prolog production of these certificates and Lean soundness proofs are
+  proposed next steps. The current witness is neither a Lean proof nor a
+  backend attestation, and the checker does not verify physical dynamics.
+
+## Native Integration Consolidation: 2026-10-15
+
+- Implemented `--require-prolog` for `run`, `compare`, and `suite`, and matching
+  Python API arguments. It implies enabled checks and rejects missing runtimes,
+  mismatched versions, invalid files, or initialization failures with an explicit
+  error. Query errors stop execution rather than switching backends mid-run.
+- Fixed reference versions in [toolchains.toml](../toolchains.toml): SWI-Prolog
+  9.2.9, PySwip 0.3.3, and Lean 4.19.0. PySwip dependency declarations and the
+  Lean selector are pinned. The new CI configuration has separate Python,
+  real-Prolog, and Lean jobs; the Prolog container also has a fixed image digest.
+- New rounds, event logs, CSVs, terminal/text reports, and suite metadata identify
+  the effective governance backend, mode, runtime versions, rule hash, and any
+  fallback reason. Pairing rejects mixed governance identities within a condition.
+  The legacy optional `--use-prolog` behavior remains available with recorded fallback.
+- Corrected name quoting, cleared facts at their declared arities, preserved
+  resource precision at permission thresholds, and checked predicates originate
+  in the requested rule file. Process workers explicitly use spawn to avoid
+  inheriting an initialized native interpreter on Unix.
+- **208 ordinary Python tests passed**, with 17 native checks deselected.
+  The process-worker regression passed again after selecting spawn explicitly.
+  **16 real Prolog integration tests passed** on WSL Ubuntu/Python 3.12.3,
+  against locally compiled SWI-Prolog 9.2.9 and PySwip 0.3.3. The source archive
+  SHA-256 matched the official release. Pytest reported one shared-checkout
+  cache-permission warning; assertions passed.
+- **One separate Lean integration test passed** on Windows/Python 3.14.3:
+  version 4.19.0 was checked and `lake build` succeeded. Ruff and
+  `git diff --check` passed. Hosted CI, native Windows SWI-Prolog, and the full
+  research study were not run.
+- Retained a [three-round real-backend trace](evidence/2026-10-15/prolog_smoke.json)
+  and [validation/environment record](evidence/2026-10-15/native_integration.json).
+  These are integration evidence, not substantive governance findings.
+- The default Python-only dynamics, scenario parameters, and random keys are
+  unchanged. Prolog-enabled runs apply an additional institutional treatment;
+  compare them separately from the historical Python-only study. New exports add
+  backend columns; historical files do not establish native coverage. Source
+  identities now include toolchain declarations and formal sources. Historical
+  evidence is retained without relabeling its metadata.
+- No new Lean theorem or Prolog delegation mechanism was introduced. Connecting
+  certified decision semantics to Prolog execution remains proposed work.
+
+## Python Explanation Pass: 2026-10-15
+
+- Expanded English comments and docstrings across all 18 `src/pcds` modules
+  and the three supplementary experiment scripts. Explanations cover ownership
+  of state, round ordering, private assessments, ballot conservation, physical
+  budgets, measurement denominators, paired inference, and presentation boundaries.
+- Added a presentation-oriented reading route with concrete examples in the
+  [code guide](code_guide.md#explaining-the-python-architecture-in-a-presentation).
+- Compared every modified Python file with its Git HEAD version using ASTs
+  with docstrings removed: executable structures are identical in all 21 files.
+  No mechanics, parameters, interfaces, or random-event keys changed.
+- **195 Python tests passed** (`python -m pytest -q`); Ruff checks of `src` and
+  `experiments` and `git diff --check` passed.
+- Numerical outputs do not need regeneration for this explanatory change.
+  Source fingerprints include comments/docstrings, so their values change;
+  retained evidence keeps its original provenance. Exact-source snapshot
+  packaging requires the recorded revision or a new run against current sources.
+- Large research suites, real SWI-Prolog integration, and Lean were not rerun.
 
 ## Refreshed Research Study: 2026-10-14
 

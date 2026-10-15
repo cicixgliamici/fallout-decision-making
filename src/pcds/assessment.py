@@ -1,6 +1,10 @@
 """Turn imperfect information about needs and policy effects into current rankings.
 
 These scores guide ballots; they are separate from the welfare measured after outcomes.
+
+The path is current world -> reserve targets -> private noisy policy scores ->
+rankings. This is a one-step heuristic, with stable personal priorities; members
+do not search future trajectories or learn a posterior belief across rounds.
 """
 
 from __future__ import annotations
@@ -94,6 +98,8 @@ def assess_policy(
 
     Higher scores lead to higher current ranks. Exact information is an audit reference only.
     """
+    # Expertise narrows estimation errors. It does not multiply production or
+    # supply the winning policy directly to a specialist.
     accuracy = 1.0 if perfect_information else policy_accuracy(agent, policy, parameters)
     uncertainty = 1.0 - accuracy
     impact = parameters.policy_impacts[policy]
@@ -111,6 +117,8 @@ def assess_policy(
     }
     effect_noise = parameters.decision.effect_noise * uncertainty
     healing = _expected_healing(impact, context, parameters, uncertainty, rng)
+    # Healing is a mean per living member; convert it to a community medicine
+    # bill so the same benefit is not also counted as unspent reserve stock.
     effects["medicine"] -= healing * context.population * parameters.treatment_medicine_per_health
     reserve_gain = _reserve_gain(context, effects, parameters, uncertainty, rng)
     expected_injury = impact.injury_probability * (impact.injury_min + impact.injury_max) / 2.0
@@ -183,6 +191,8 @@ def _reserve_gain(
     Capping stocks at each target stops large surpluses from continually dominating this score.
     """
     gain = 0.0
+    # Helpers draw their own signals, even for a previously observed resource.
+    # These are independent heuristic estimates, not one coherent stock belief.
     for resource, effect in effects.items():
         target = max(1.0, context.targets[resource])
         # Absolute observation error remains possible at zero stock; effect
@@ -257,6 +267,8 @@ def update_preferences(
                 perfect_information=True,
             )
             errors.append(abs(scores[policy] - reference))
+        # Python's stable sort preserves Policy declaration order on equal scores.
+        # Count a changed full ranking, not merely a change of first choice.
         ranking = sorted(Policy, key=lambda policy: scores[policy], reverse=True)
         changes += ranking != agent.preferences
         agent.preferences = ranking

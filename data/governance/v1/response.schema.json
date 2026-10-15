@@ -1,0 +1,321 @@
+{
+  "$defs": {
+    "BallotWitness": {
+      "additionalProperties": false,
+      "description": "One original ballot, its greedy delegation path, and its actual contributions.",
+      "properties": {
+        "voter": {
+          "minLength": 1,
+          "title": "Voter",
+          "type": "string"
+        },
+        "topic": {
+          "$ref": "#/$defs/Policy"
+        },
+        "path": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 4,
+          "minItems": 1,
+          "title": "Path",
+          "type": "array"
+        },
+        "stop_reason": {
+          "enum": [
+            "direct_rule",
+            "no_eligible_expert",
+            "single_hop",
+            "cycle",
+            "depth_limit"
+          ],
+          "title": "Stop Reason",
+          "type": "string"
+        },
+        "representative": {
+          "minLength": 1,
+          "title": "Representative",
+          "type": "string"
+        },
+        "votes_for": {
+          "items": {
+            "$ref": "#/$defs/Policy"
+          },
+          "maxItems": 2,
+          "minItems": 1,
+          "title": "Votes For",
+          "type": "array"
+        }
+      },
+      "required": [
+        "voter",
+        "topic",
+        "path",
+        "stop_reason",
+        "representative",
+        "votes_for"
+      ],
+      "title": "BallotWitness",
+      "type": "object"
+    },
+    "ContractProblem": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "enum": [
+            "unsupported_version",
+            "invalid_request",
+            "backend_unavailable",
+            "backend_version_mismatch",
+            "rule_loading_failed",
+            "backend_query_failed",
+            "invalid_response",
+            "request_mismatch",
+            "invalid_certificate"
+          ],
+          "title": "Code",
+          "type": "string"
+        },
+        "message": {
+          "minLength": 1,
+          "title": "Message",
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "message"
+      ],
+      "title": "ContractProblem",
+      "type": "object"
+    },
+    "GovernanceCertificate": {
+      "additionalProperties": false,
+      "description": "A request-bound witness, not an attestation of backend identity or a Lean proof.",
+      "properties": {
+        "schema_version": {
+          "const": "governance-witness-v1",
+          "default": "governance-witness-v1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "request_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Request Sha256",
+          "type": "string"
+        },
+        "ballots": {
+          "items": {
+            "$ref": "#/$defs/BallotWitness"
+          },
+          "title": "Ballots",
+          "type": "array"
+        },
+        "permissions": {
+          "items": {
+            "$ref": "#/$defs/PolicyPermission"
+          },
+          "title": "Permissions",
+          "type": "array"
+        }
+      },
+      "required": [
+        "request_sha256",
+        "ballots",
+        "permissions"
+      ],
+      "title": "GovernanceCertificate",
+      "type": "object"
+    },
+    "GovernanceDecision": {
+      "additionalProperties": false,
+      "description": "Election result and post-election permission override, before affordability.",
+      "properties": {
+        "mandate": {
+          "enum": [
+            "vote",
+            "recording_default"
+          ],
+          "title": "Mandate",
+          "type": "string"
+        },
+        "eligible_voters": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Eligible Voters",
+          "type": "array"
+        },
+        "representatives": {
+          "additionalProperties": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "propertyNames": {
+            "minLength": 1
+          },
+          "title": "Representatives",
+          "type": "object"
+        },
+        "scores": {
+          "additionalProperties": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "propertyNames": {
+            "$ref": "#/$defs/Policy"
+          },
+          "title": "Scores",
+          "type": "object"
+        },
+        "voted_policy": {
+          "$ref": "#/$defs/Policy"
+        },
+        "selected_policy": {
+          "$ref": "#/$defs/Policy"
+        },
+        "permission_override": {
+          "title": "Permission Override",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "mandate",
+        "eligible_voters",
+        "representatives",
+        "scores",
+        "voted_policy",
+        "selected_policy",
+        "permission_override"
+      ],
+      "title": "GovernanceDecision",
+      "type": "object"
+    },
+    "GovernanceFailure": {
+      "additionalProperties": false,
+      "description": "An error never carries a successful policy or a substitute certificate.",
+      "properties": {
+        "schema_version": {
+          "const": "pcds-governance-v1",
+          "default": "pcds-governance-v1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "status": {
+          "const": "error",
+          "default": "error",
+          "title": "Status",
+          "type": "string"
+        },
+        "request_sha256": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Request Sha256"
+        },
+        "error": {
+          "$ref": "#/$defs/ContractProblem"
+        }
+      },
+      "required": [
+        "error"
+      ],
+      "title": "GovernanceFailure",
+      "type": "object"
+    },
+    "GovernanceSuccess": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "pcds-governance-v1",
+          "default": "pcds-governance-v1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "status": {
+          "const": "ok",
+          "default": "ok",
+          "title": "Status",
+          "type": "string"
+        },
+        "decision": {
+          "$ref": "#/$defs/GovernanceDecision"
+        },
+        "certificate": {
+          "$ref": "#/$defs/GovernanceCertificate"
+        }
+      },
+      "required": [
+        "decision",
+        "certificate"
+      ],
+      "title": "GovernanceSuccess",
+      "type": "object"
+    },
+    "Policy": {
+      "description": "The four available collective actions; declaration order also breaks score ties.",
+      "enum": [
+        "farming",
+        "medicine",
+        "defense",
+        "exploration"
+      ],
+      "title": "Policy",
+      "type": "string"
+    },
+    "PolicyPermission": {
+      "additionalProperties": false,
+      "properties": {
+        "policy": {
+          "$ref": "#/$defs/Policy"
+        },
+        "allowed": {
+          "title": "Allowed",
+          "type": "boolean"
+        },
+        "reason": {
+          "enum": [
+            "checks_disabled",
+            "unconditional",
+            "requirements_met",
+            "security_below_15",
+            "energy_below_2"
+          ],
+          "title": "Reason",
+          "type": "string"
+        }
+      },
+      "required": [
+        "policy",
+        "allowed",
+        "reason"
+      ],
+      "title": "PolicyPermission",
+      "type": "object"
+    }
+  },
+  "discriminator": {
+    "mapping": {
+      "error": "#/$defs/GovernanceFailure",
+      "ok": "#/$defs/GovernanceSuccess"
+    },
+    "propertyName": "status"
+  },
+  "oneOf": [
+    {
+      "$ref": "#/$defs/GovernanceSuccess"
+    },
+    {
+      "$ref": "#/$defs/GovernanceFailure"
+    }
+  ]
+}

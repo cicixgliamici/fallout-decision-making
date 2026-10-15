@@ -11,7 +11,7 @@ dependencies = [
     "matplotlib>=3.8",
     "pydantic>=2.5",
     "typer>=0.9",
-    "pyswip>=0.2.10",
+    "pyswip==0.3.3",
 ]
 
 [project.optional-dependencies]
@@ -30,11 +30,12 @@ line-length = 100
 src = ["src"]
 
 [tool.pytest.ini_options]
+addopts = "-m 'not prolog and not lean'"
 pythonpath = ["src"]
 testpaths = ["tests"]
 markers = [
-    "prolog: tests requiring SWI-Prolog and PySwip",
-    "lean: tests requiring elan/lake",
+    "prolog: real SWI-Prolog integration; fails if the pinned backend is unavailable",
+    "lean: separate Lean build; fails if the pinned toolchain is unavailable",
 ]
 
 [tool.mypy]

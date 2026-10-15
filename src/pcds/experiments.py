@@ -1,6 +1,10 @@
 """Run predefined conditions and turn checked outcomes into reviewable evidence.
 
 Validation guards data consistency; model validity still needs a separate research argument.
+
+The pipeline is condition overrides -> matched trajectories -> validation ->
+paired inference -> CSV/JSON evidence and figures. Conditions may run in separate
+processes, but each receives its own copied scenario and the same trial seed schedule.
 """
 
 from __future__ import annotations
@@ -11,6 +15,7 @@ import platform
 from concurrent.futures import ProcessPoolExecutor
 from datetime import UTC, datetime
 from importlib.metadata import version
+from multiprocessing import get_context
 from pathlib import Path
 
 import polars as pl
@@ -29,10 +34,13 @@ from pcds.paired_analysis import (
 from pcds.randomness import RANDOMNESS_SCHEME
 from pcds.research_reporting import write_research_report
 from pcds.provenance import source_fingerprints
+from pcds.prolog_rules import PrologRuleEngine, governance_versions
 from pcds.scenarios import Scenario, load_scenario
 from pcds.simulation import compare_rules
 from pcds.voting import VOTING_RULES
 
+# An empty override retains the loaded baseline. The fixed/equal-accuracy cases
+# remove model mechanisms; the remaining cases alter declared stress assumptions.
 EXPERIMENTS: dict[str, dict] = {
     "moderate_scarcity": {},
     "fixed_preferences": {"decision_mode": "fixed"},
@@ -114,6 +122,8 @@ def run_experiment_suite(
     seed: int = 42,
     sensitivity: bool = False,
     workers: int = 1,
+    use_prolog: bool = False,
+    require_prolog: bool = False,
 ) -> dict[str, Path]:
     """Run predefined scarcity, information, and trust conditions on matching seeds.
 
@@ -127,6 +137,9 @@ def run_experiment_suite(
     if workers <= 0:
         raise ValueError("workers must be greater than zero")
 
+    # Fail before creating research artifacts if strict backend initialization fails.
+    if require_prolog:
+        PrologRuleEngine(required=True)
     base = load_scenario(scenario_path)
     conditions = dict(EXPERIMENTS)
     if sensitivity:
@@ -137,8 +150,11 @@ def run_experiment_suite(
     raw_frames: list[pl.DataFrame] = []
     summary_frames: list[pl.DataFrame] = []
 
+    # Parallelize complete conditions, keeping each world's mutable state local.
+    # workers controls execution only; it is not another experimental treatment.
     tasks = [
-        (name, _scenario_with_overrides(base, overrides), runs, steps, seed)
+        (name, _scenario_with_overrides(base, overrides), runs, steps, seed,
+         use_prolog, require_prolog)
         for name, overrides in conditions.items()
     ]
     for df in _condition_frames(tasks, workers):
@@ -173,6 +189,8 @@ def run_experiment_suite(
     effects.write_csv(effects_path)
     paired.write_csv(paired_path)
     validation_path.write_text(json.dumps(validation, indent=2), encoding="utf-8")
+    # Full configurations identify assumptions; versions and source fingerprints
+    # identify the implementation. A seed alone cannot reproduce a changed model.
     metadata_path.write_text(
         json.dumps(
             {
@@ -185,6 +203,12 @@ def run_experiment_suite(
                 "metric_schema": METRIC_SCHEMA,
                 "physics_schema": PHYSICS_SCHEMA,
                 "source_sha256": source_fingerprints(),
+                "governance": {
+                    "reference_versions": governance_versions(),
+                    "observed_backends": raw.select(
+                        [column for column in raw.columns if column.startswith("governance_")]
+                    ).unique(maintain_order=True).to_dicts(),
+                },
                 "sensitivity": sensitivity,
                 "workers": workers,
                 "study_scope": "exploratory; no empirical parameter calibration",
@@ -237,10 +261,13 @@ def run_experiment_suite(
     }
 
 
-def _run_condition(task: tuple[str, Scenario, int, int, int]) -> pl.DataFrame:
+def _run_condition(task: tuple) -> pl.DataFrame:
     """Keep a condition independent so parallel execution cannot share mutable state."""
-    name, scenario, runs, steps, seed = task
-    frame = compare_rules(runs=runs, steps=steps, seed=seed, scenario=scenario)
+    name, scenario, runs, steps, seed, *backend_options = task
+    # Retain the existing five-element task interface used by small Python callers.
+    use_prolog, require_prolog = backend_options or (False, False)
+    frame = compare_rules(runs=runs, steps=steps, seed=seed, scenario=scenario,
+                          use_prolog=use_prolog, require_prolog=require_prolog)
     return frame.with_columns(pl.lit(name).alias("experiment"))
 
 
@@ -249,9 +276,11 @@ def _condition_frames(tasks: list[tuple], workers: int):
     if workers == 1:
         yield from map(_run_condition, tasks)
     else:
-        # Processes provide CPU parallelism without changing seed ownership.
+        # Spawn avoids inheriting an already initialized native Prolog interpreter
+        # on Unix. Each worker loads its own runtime, as it already does on Windows.
         # executor.map preserves input order, keeping exports deterministic.
-        with ProcessPoolExecutor(max_workers=min(workers, len(tasks))) as executor:
+        with ProcessPoolExecutor(max_workers=min(workers, len(tasks)),
+                                 mp_context=get_context("spawn")) as executor:
             yield from executor.map(_run_condition, tasks)
 
 
@@ -271,6 +300,8 @@ def validate_experiment_outputs(
 
     expected_experiments = set(EXPERIMENTS) if experiment_names is None else experiment_names
     expected_rules = set(VOTING_RULES)
+    # Coverage is the Cartesian product of conditions, rules, and replications.
+    # A plausible aggregate row count alone would not detect a missing group.
     expected_raw_rows = len(expected_experiments) * len(expected_rules) * runs
     expected_summary_rows = len(expected_experiments) * len(expected_rules)
 
@@ -479,6 +510,8 @@ def summarize_rules(df: pl.DataFrame) -> pl.DataFrame:
 
     These separate-rule intervals are not confidence intervals on paired differences.
     """
+    # Polars count excludes nulls: every conditional mean and interval therefore
+    # carries its own effective sample size, rather than the requested run count.
     expressions = []
     for metric in METRICS:
         expressions.extend(

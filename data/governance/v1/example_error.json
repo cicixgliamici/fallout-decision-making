@@ -1,0 +1,9 @@
+{
+  "schema_version": "pcds-governance-v1",
+  "status": "error",
+  "request_sha256": null,
+  "error": {
+    "code": "unsupported_version",
+    "message": "Unsupported governance contract version"
+  }
+}

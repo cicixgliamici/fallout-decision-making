@@ -1,0 +1,65 @@
+name: Python and separate native checks
+
+on: [push, pull_request, workflow_dispatch]
+
+permissions:
+  contents: read
+
+jobs:
+  python:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -e '.[dev]'
+      - run: python -m ruff check src tests experiments
+      # Default selection excludes native checks; this job cannot claim their coverage.
+      - run: python -m pytest -q --junitxml=python-results.xml
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: python-results
+          path: python-results.xml
+
+  prolog:
+    runs-on: ubuntu-24.04
+    # Versioned official runtime; required mode also verifies the loaded library.
+    container: swipl:9.2.9@sha256:3e4b85b16f1e269c8a3ce3d968c843aa4cd858f7ace2db49398ec9a2b113bf0f
+    steps:
+      - uses: actions/checkout@v4
+      - run: apt-get update && apt-get install -y --no-install-recommends python3 python3-venv
+      - run: python3 -m venv .venv
+      - run: .venv/bin/python -m pip install -e '.[dev]'
+      - run: swipl --version
+      - run: .venv/bin/python -m pytest -q -m prolog tests/integration --junitxml=prolog-results.xml
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: prolog-results
+          path: prolog-results.xml
+
+  lean:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install pytest==8.2.0
+      - name: Install the declared Lean toolchain
+        shell: bash
+        run: |
+          mkdir -p /tmp/pcds-elan
+          curl -sSfL https://github.com/leanprover/elan/releases/download/v4.1.2/elan-x86_64-unknown-linux-gnu.tar.gz -o /tmp/pcds-elan/elan.tar.gz
+          tar -xzf /tmp/pcds-elan/elan.tar.gz -C /tmp/pcds-elan
+          /tmp/pcds-elan/elan-init -y --default-toolchain none
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+      - run: elan toolchain install "$(cat formal/lean/lean-toolchain)"
+      - run: python -m pytest -q -m lean tests/integration/test_lean.py --junitxml=lean-results.xml
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lean-results
+          path: lean-results.xml

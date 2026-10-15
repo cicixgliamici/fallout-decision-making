@@ -1,0 +1,7 @@
+# Research reference versions, not claims that other versions cannot work.
+[governance]
+swipl = "9.2.9"
+pyswip = "0.3.3"
+
+[formal]
+lean = "4.19.0"

@@ -1,5 +1,6 @@
-% Optional institutional rules: permission to participate or choose a policy.
-% Python handles physical effects and resolves actual delegation chains.
+% Compatibility predicates for institutional queries. The pure contract resolver
+% in governance_decision.pl now owns complete elections, including delegation.
+:- use_module(governance_decision, [expertise/2]).
 
 % Dynamic facts are asserted from Python when PySwip is available.
 :- dynamic alive/1.
@@ -22,14 +23,9 @@ eligible_to_vote(A) :-
     alive(A),
     \+ sanctioned(A).
 
-% The delegation predicates below are illustrative declarations. The simulator
-% does not query can_delegate/3, and Python's role map also treats elders as
-% medicine specialists. No full equivalence between these role maps is claimed.
-expert_for(A, medicine) :- role(A, doctor).
-expert_for(A, farming) :- role(A, farmer).
-expert_for(A, defense) :- role(A, guard).
-expert_for(A, defense) :- role(A, engineer).
-expert_for(A, exploration) :- role(A, scavenger).
+% Share the role map with the actual resolver, including elders as medicine
+% specialists. This avoids a second, subtly different definition of expertise.
+expert_for(A, Topic) :- role(A, Role), expertise(Role, Topic).
 
 can_delegate(A, B, Topic) :-
     eligible_to_vote(A),

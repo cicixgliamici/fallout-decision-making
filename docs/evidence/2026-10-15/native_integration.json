@@ -1,0 +1,98 @@
+{
+  "checked_on": "2026-10-15",
+  "scope": "native integration consolidation, not certification of simulation or Prolog",
+  "reference_governance_versions": {
+    "swipl": "9.2.9",
+    "pyswip": "0.3.3"
+  },
+  "observed_governance": {
+    "mode": "required",
+    "backend": "swipl",
+    "swipl_version": "9.2.9",
+    "pyswip_version": "0.3.3",
+    "rules_sha256": "c528451c697b8ff5eeb169a8066caff68d596df32479a7df7f490c2818932846",
+    "fallback_reason": null
+  },
+  "prolog_environment": {
+    "platform": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+    "python": "3.12.3",
+    "packages": {
+      "pyswip": "0.3.3",
+      "pytest": "9.1.1",
+      "numpy": "2.5.4",
+      "networkx": "3.7",
+      "polars": "2.0.0",
+      "pydantic": "2.14.1",
+      "typer": "0.27.3"
+    },
+    "runtime_source": "https://www.swi-prolog.org/download/stable/src/swipl-9.2.9.tar.gz",
+    "runtime_source_sha256": "53f428e2d9bbdf30e53b06c9c42def9a13ff82fc36a111d410fc8b0bc889ee2d",
+    "runtime_build": "Release; SWIPL_PACKAGES=OFF; installed locally in project .local"
+  },
+  "checks": [
+    {
+      "command": "python -m pytest -q",
+      "environment": "Windows, Python 3.14.3",
+      "passed": 208,
+      "deselected": 17
+    },
+    {
+      "command": "python -m pytest -q tests/test_experiments.py::test_parallel_conditions_preserve_sequential_values_and_order",
+      "environment": "Windows, Python 3.14.3",
+      "passed": 1,
+      "note": "Focused regression after explicitly selecting spawn for process workers."
+    },
+    {
+      "command": "python -m pytest -q -m prolog tests/integration/test_prolog.py",
+      "environment": "WSL Ubuntu, real compiled SWI-Prolog 9.2.9",
+      "passed": 16,
+      "warning": "Pytest could not update the shared Windows checkout cache; assertions passed. Use a Linux cache_dir when rerunning."
+    },
+    {
+      "command": "python -m pytest -q -m lean tests/integration/test_lean.py",
+      "environment": "Windows, Python 3.14.3, Lean 4.19.0",
+      "passed": 1,
+      "lean_commit": "6caaee842e94",
+      "scope": "Version check and lake build of the existing small formal package."
+    },
+    {
+      "command": "python -m ruff check src tests experiments",
+      "passed": true
+    }
+  ],
+  "not_run": [
+    "hosted GitHub Actions",
+    "native Windows SWI-Prolog integration",
+    "full 5600-trajectory research study"
+  ],
+  "source_sha256": {
+    "formal/lean/Wasteland/Basic.lean": "945fb2a010d78f9367e749aa3d66c5d409d6dad515e45fc1c74749ab3c0fd889",
+    "formal/lean/Wasteland/Delegation.lean": "d5ef69d24f8ba5d948a96d27fb1e22cac7356093c23ae0e714f8aece627b643a",
+    "formal/lean/Wasteland.lean": "42e07c6debfc08b6bbbb37d6a2971533ec90ec5998fac06a17707322c4794879",
+    "formal/lean/lakefile.lean": "2cea4e4d002ca3fe48f6d956f3ac6dad117dc0667f228d946ab669e4437f5561",
+    "formal/lean/lean-toolchain": "55e97be96000b5e9e290c9e74482e5e317861499a5540353ce845471bded8cea",
+    "pyproject.toml": "55e5a946427bb953cf3dbc405363c7a1fda8ebb3c9de4ee4336440669f2fe1e1",
+    "requirements.txt": "f1f4835913ea58b0912b4f6b52691eacaa7a4afdeaf684266035f3a4d093a1e5",
+    "rules/governance.pl": "c528451c697b8ff5eeb169a8066caff68d596df32479a7df7f490c2818932846",
+    "src/pcds/__init__.py": "f8209f1058b3bf4d47f08850d59153e48ffddd4dcdeaf2e1de538893f71a19db",
+    "src/pcds/assessment.py": "fd26650d5cbb68f2536b55601f8c80fb321569f9d92eda60669ba308625bc819",
+    "src/pcds/cli.py": "7c03071568985370ad830aef3a652035ec45204edc43b05c68629e3f1581da8a",
+    "src/pcds/events.py": "9d3f55b3ccf9fae5d7713a32e8092da1a3d5ec80b7e9dfe55a1cfd1bd4123730",
+    "src/pcds/experiments.py": "76cf5bff7a86d1d30f13161e380f127a05a500757c7dd842d8501109e05a9dc4",
+    "src/pcds/factory.py": "aaaa2204eeb9e27676f546353657cf1eaca35ae6e317bdc996d697177bca454b",
+    "src/pcds/metric_definitions.py": "aefa6629185d0a8c4af450e75ad563abd078533c40127d2c1b9d4dd8ecd7f7a0",
+    "src/pcds/metrics.py": "4909da8496e074b6a35ff3373d964eb3389e4ce1b441e039aa7b99d33e1771b4",
+    "src/pcds/models.py": "f1ea602f4442eb02ada74e54f97872cf92eb21714451d941f9fbf48bd0acd0cd",
+    "src/pcds/narrative.py": "daefc45d0be32e1d830577b1ce8b2bdbdc36e21b4c1218f55e358efae997c4c7",
+    "src/pcds/paired_analysis.py": "3b4fcb5a534617f04b029e142e91499c7fdf348ebdea7257038dd3b460a30105",
+    "src/pcds/prolog_rules.py": "34f533bb61616f7702686f31c16a02726ad61cb0cbb7922fef70800628183fda",
+    "src/pcds/provenance.py": "40a00576cd4ee4332f0ee28dcf0a4c76ac7690aca4d4165e8d121ba7d146b40e",
+    "src/pcds/randomness.py": "d3ed2adbd52b0efbc05151d34c06f2f0e5f76702382de57772aaf2a0f38eb523",
+    "src/pcds/research_reporting.py": "b2fb1103d8bfcdbd3803948fae5c4c14c74d6540997a11b2a71657175212dab8",
+    "src/pcds/scenarios.py": "52cc625cdd488dd65ff6e25023bbbaf9df05bd0070f5148bc2c44dc9f9d34f1b",
+    "src/pcds/simulation.py": "d86a34da40ae58801bb9cdba131684be9c0e3c4aa18c85dd1836cba9cd20567b",
+    "src/pcds/voting.py": "da0e9a070ac77d32b804164766967d1d2cf12fe55385d808bb9fbd51a7c8a3df",
+    "toolchains.toml": "8c6091fd773ae50d2264a84210a2f6ba12a6621ccd410e41f472a1b7cc75dcdd"
+  },
+  "trace_sha256": "c6adc3deddaa1951a33b6cc4cfa5f79a8ec61dbd9788be0e6ebfb03999f4198d"
+}

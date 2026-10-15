@@ -1,4 +1,9 @@
-"""Keep a compact, auditable study snapshot in the reviewer documentation."""
+"""Keep a compact, auditable study snapshot in the reviewer documentation.
+
+This packaging step consumes completed, validated outputs; it runs no simulation.
+Source hashes bind the numerical evidence to the implementation used to produce
+it, while artifact hashes identify the copied files and compressed observations.
+"""
 
 from __future__ import annotations
 
@@ -32,6 +37,8 @@ def record_environment(destination: Path) -> None:
     pending = ["numpy", "networkx", "polars", "matplotlib", "pydantic", "typer", "pyswip",
                "pytest", "ruff"]
     pinned = {}
+    # Walk transitive dependencies once per normalized package name. Environment
+    # markers select dependencies active here, without enabling optional extras.
     while pending:
         name = canonicalize_name(pending.pop())
         if name in pinned:
@@ -51,6 +58,8 @@ def record_environment(destination: Path) -> None:
 def _copy_holdout(source: Path, destination: Path) -> list[str]:
     """Keep a separate seed block distinct from the main condition estimates."""
     metadata = json.loads((source / "holdout_metadata.json").read_text(encoding="utf-8"))
+    # Fingerprints include comments and docstrings. Even an explanatory edit
+    # changes source identity; never relabel historical evidence with new hashes.
     if metadata["source_sha256"] != source_fingerprints():
         raise ValueError("holdout source differs from current code")
     validation = json.loads((source / "holdout_validation.json").read_text(encoding="utf-8"))

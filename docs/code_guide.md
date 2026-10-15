@@ -23,6 +23,46 @@ An underscore at the start of a function name marks an internal helper.
 separate. `models.py` uses Pydantic to read typed data and check declared bounds;
 that validation does not establish that assumptions are realistic.
 
+## Explaining the Python Architecture in a Presentation
+
+English module docstrings describe each component's responsibility; inline
+comments explain the model choices at the point where they take effect. The
+following route connects a short oral explanation to concrete code:
+
+1. **Inputs:** show `Scenario` and `CommunityState`. The JSON file declares the
+   population, initial stocks, and assumptions; Pydantic checks declared types
+   and bounds. The loaded scenario can override the Python parameter defaults.
+2. **One round:** follow the four stage comments in `run_simulation`: prepare
+   exposure and stocks, form rankings and vote, apply physical effects, record
+   measurements. Mutable agents and stocks belong to that trajectory.
+3. **Individual judgment:** show `assess_policy`. Private estimates balance
+   reserves, healing, injury risk, and original priorities. Expertise narrows
+   estimation error; this is a heuristic rather than an optimal planner.
+4. **Collective choice:** show `VotingOutcome` and `_resolve_delegate`. Each
+   original eligible ballot has one terminal holder. For example, a mapping
+   `{"a": "b", "b": "b"}` gives `b` two votes, whose concentration can be measured.
+5. **Fair comparisons:** show `event_rng` and `compare_rules`. Shared event
+   identities preserve outside draws across rules; resulting stocks and health
+   can diverge. One complete trajectory contributes one trial to inference.
+6. **Interpretation:** show `population_health` and `build_paired_differences`.
+   Deaths remain in the population-health denominator, and effects are computed
+   within matched trials before estimating uncertainty. These comparisons remain
+   conditional on the model assumptions.
+7. **Presentation:** show `render_report`. Profiles change vocabulary around
+   recorded facts, independently of the simulation's decisions and random draws.
+
+The `experiments/` scripts are supplementary: one draws a welfare-only example,
+one packages validated review evidence, and one writes the dated study discussion.
+Their comments distinguish demonstration settings and historical interpretation
+from the general research pipeline.
+
+Comments and docstrings do not change numerical mechanisms. They do change the
+source-content hashes recorded by `source_fingerprints`, which intentionally
+includes explanatory text. Existing evidence keeps its original provenance;
+packaging an old run against edited sources can fail the exact-source check.
+Reproduce the recorded source revision or generate a new run when packaging a
+new snapshot, rather than replacing historical hashes.
+
 ## Physical Budgets
 
 In `simulation.py`, `_replenish_energy` runs before assessments.
@@ -78,6 +118,15 @@ process. Explicit trust edges supplement generated edges. These details matter
 when constructing a hand-authored scenario; see [limitations](limitations.md).
 
 ## Optional Layers and Tests
+
+The [versioned governance contract](governance_contract.md) is a standalone
+decision boundary, separate from the live simulation path.
+[governance_contract.py](../src/pcds/governance_contract.py) validates snapshots
+and defines request/response/certificate schemas;
+[governance_reference.py](../src/pcds/governance_reference.py) wraps the existing
+resolver and independently checks its witnesses. `pcds govern` and
+`pcds check-governance` make that boundary inspectable before a Prolog migration.
+These commands currently run in Python and do not claim Lean certification.
 
 [prolog_rules.py](../src/pcds/prolog_rules.py) bridges to the optional
 [governance rules](../rules/governance.pl). Python still resolves delegations.

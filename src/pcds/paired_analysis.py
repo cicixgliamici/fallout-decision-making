@@ -1,6 +1,10 @@
 """Compare outcomes from the same trial before estimating uncertainty.
 
 Resample seed-level differences; members within one community are not independent trials.
+
+Input is a wide table with one row per condition/rule/trial. Pairing converts it
+to a long table with one row per metric and matched trial; summarization then
+estimates rule-minus-baseline effects separately for every condition and metric.
 """
 
 from __future__ import annotations
@@ -11,6 +15,7 @@ import numpy as np
 import polars as pl
 
 from pcds.metric_definitions import METRIC_DIRECTIONS, METRICS, NULLABLE_METRICS
+from pcds.models import GovernanceBackend
 from pcds.randomness import event_rng
 
 PAIR_KEYS = ["experiment", "run_id", "seed"]
@@ -45,6 +50,7 @@ def pairing_errors(raw: pl.DataFrame, baseline_rule: str = "majority") -> list[s
         if raw.select(["experiment", "rule", identity]).is_duplicated().any():
             return [f"pairing requires unique {identity} per experiment and rule"]
     errors: list[str] = []
+    errors.extend(governance_pairing_errors(raw))
     if "physics_schema" in raw.columns:
         # Old files lack this field. If present, require one complete version
         # per condition so identical draw digests cannot hide changed mechanics.
@@ -73,6 +79,42 @@ def pairing_errors(raw: pl.DataFrame, baseline_rule: str = "majority") -> list[s
     return errors
 
 
+def governance_pairing_errors(raw: pl.DataFrame) -> list[str]:
+    """Reject mixed institutional treatments even when their outside draws match.
+
+    Historical tables without backend columns remain readable as historical data.
+    A partially supplied backend identity is rejected rather than treated as legacy.
+    """
+    columns = [f"governance_{field}" for field in GovernanceBackend.model_fields]
+    present = set(columns).intersection(raw.columns)
+    if not present:
+        return []
+    if present != set(columns):
+        return ["governance identity is incomplete"]
+    errors = []
+    for frame in raw.partition_by("experiment"):
+        identities = frame.select(columns).unique()
+        if identities.height != 1:
+            errors.append("paired rules have different governance backends or rule identities")
+        for row in identities.to_dicts():
+            mode, backend = row["governance_mode"], row["governance_backend"]
+            if mode not in {"disabled", "optional", "required"}:
+                errors.append("invalid governance mode")
+            if backend not in {"python", "python_fallback", "swipl"}:
+                errors.append("invalid governance backend")
+            if (mode == "disabled") != (backend == "python"):
+                errors.append("disabled governance must use the plain Python backend")
+            if mode == "required" and backend != "swipl":
+                errors.append("required governance cannot use a fallback")
+            if backend == "swipl" and not all(row[f"governance_{field}"] for field in (
+                "swipl_version", "pyswip_version", "rules_sha256"
+            )):
+                errors.append("real Prolog provenance requires runtime versions and rules hash")
+            if backend == "python_fallback" and not row["governance_fallback_reason"]:
+                errors.append("a Prolog fallback requires a recorded reason")
+    return errors
+
+
 def build_paired_differences(raw: pl.DataFrame, baseline_rule: str = "majority") -> pl.DataFrame:
     """Subtract the baseline outcome within each experiment/run/seed pair.
 
@@ -84,6 +126,8 @@ def build_paired_differences(raw: pl.DataFrame, baseline_rule: str = "majority")
     baseline = raw.filter(pl.col("rule") == baseline_rule).select(
         *PAIR_KEYS, *[pl.col(metric).alias(f"baseline_{metric}") for metric in METRICS]
     )
+    # Each candidate row receives exactly one baseline from the same condition
+    # and trial. Never match solely by row position or by a rule's average score.
     matched = raw.join(baseline, on=PAIR_KEYS, how="left", validate="m:1")
     frames = []
     for metric in METRICS:
@@ -120,6 +164,8 @@ def _bootstrap_interval(
         count = min(256, resamples - start)
         draws = rng.choice(differences, size=(count, len(differences)), replace=True)
         means[start : start + count] = draws.mean(axis=1)
+    # The middle 95% of resampled means is a percentile bootstrap interval.
+    # It describes trial variability under these assumptions, not model realism.
     lower, upper = np.quantile(means, [0.025, 0.975])
     return float(lower), float(upper)
 

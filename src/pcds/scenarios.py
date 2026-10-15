@@ -1,6 +1,10 @@
 """Read the community and its assumptions from a JSON scenario.
 
 Keep inputs separate from mechanisms so comparisons can change one assumption at a time.
+
+A scenario declares population, reserves, trust configuration, and parameters.
+It contains no presentation profile: the same mechanical input can be described
+using Vault or neutral vocabulary after the simulation has finished.
 """
 
 from __future__ import annotations
@@ -43,6 +47,8 @@ class Scenario(BaseModel):
 
     name: str
     description: str = ""
+    # An integer requests a synthetic population; a list preserves authored
+    # identities and attributes. The factory handles these two initialization paths.
     agents: int | list[AgentSpec] = 40
     resources: CommunityState = Field(default_factory=CommunityState)
     policies: list[Policy] = Field(default_factory=lambda: list(Policy))

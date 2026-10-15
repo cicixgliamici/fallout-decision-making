@@ -1,4 +1,9 @@
-"""Render recorded facts using replaceable labels, independently of the engine."""
+"""Render recorded facts using replaceable labels, independently of the engine.
+
+Input is an already-computed trajectory with event recording enabled. Profiles
+supply vocabulary; event endpoints supply factual changes. Rendering does not
+run policies, sample events, or infer the comparative effect of a voting rule.
+"""
 
 from __future__ import annotations
 
@@ -61,10 +66,12 @@ def _validate_trace(results: Sequence[RoundResult]) -> None:
     if not results:
         raise ValueError("a report requires at least one recorded round")
     first = results[0]
-    identity = (first.rule, first.simulation_seed, first.initial_population, first.physics_schema)
+    identity = (first.rule, first.simulation_seed, first.initial_population,
+                first.physics_schema, first.governance)
     for index, result in enumerate(results):
         if (
-            result.rule, result.simulation_seed, result.initial_population, result.physics_schema
+            result.rule, result.simulation_seed, result.initial_population,
+            result.physics_schema, result.governance
         ) != identity:
             raise ValueError("rounds must belong to the same simulation")
         if index and result.step != results[index - 1].step + 1:
@@ -89,10 +96,15 @@ def render_report(
         profile.introduction,
         f"Rule: {first.rule} | Seed: {first.simulation_seed}",
         f"Physics: {first.physics_schema}",
+        f"Governance checks: {first.governance.mode} | Backend: {first.governance.backend}",
+        f"SWI-Prolog: {first.governance.swipl_version or 'not loaded'} | "
+        f"PySwip: {first.governance.pyswip_version or 'not loaded'}",
         "Cycles are decision allocations, not calendar days or work shifts.",
         "Resource amounts and health are abstract model units.",
         "",
     ]
+    if first.governance.fallback_reason:
+        lines.insert(-1, f"Fallback reason: {first.governance.fallback_reason}")
     for result in results:
         lines.extend(_round_report(result, profile))
     return "\n".join(lines).rstrip() + "\n"
@@ -159,6 +171,7 @@ def _reserve_report(result: RoundResult) -> str:
 
 
 def _transaction(event: SimulationEvent) -> str:
+    """Format an observed transaction, exposing a clipped request when relevant."""
     actual = event.after - event.before
     text = f"{event.subject} {actual:+.3f}"
     # Floors and health caps mean a requested effect need not be fully realized.
@@ -191,6 +204,7 @@ def _environment_health_report(events: Sequence[SimulationEvent]) -> list[str]:
 
 
 def _optional(value: float | None) -> str:
+    """Preserve the distinction between an absent conditional measure and zero."""
     return "N/A" if value is None else f"{value:.3f}"
 
 
@@ -207,6 +221,7 @@ def export_event_log(
         "randomness_scheme": RANDOMNESS_SCHEME,
         "metric_schema": METRIC_SCHEMA,
         "physics_schema": results[0].physics_schema,
+        "governance": results[0].governance.model_dump(mode="json"),
         "rounds": [result.model_dump(mode="json") for result in results],
     }
     if scenario_configuration is not None:

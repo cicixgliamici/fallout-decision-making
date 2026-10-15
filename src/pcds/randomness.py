@@ -1,6 +1,10 @@
 """Give each random event a reproducible identity.
 
 A policy choice or death must not change the next external event faced by another rule.
+
+Think of each key as a labelled envelope containing one event's random stream.
+Opening a policy envelope cannot move the contents of an environmental envelope.
+Matching keys matches draws, while different states can still yield different outcomes.
 """
 
 from __future__ import annotations
@@ -20,6 +24,8 @@ def event_rng(seed: int, domain: str, step: int, *identifiers: str) -> random.Ra
 
     The same seed and event identity reproduce the same draws.
     """
+    # Rule names are deliberately absent: competing rules must share the same
+    # potential exposure when seed, round, and event identity agree.
     key = json.dumps([domain, seed, step, *identifiers], separators=(",", ":"))
     return random.Random(key)
 

@@ -1,0 +1,89 @@
+{
+  "checked_on": "2026-10-15",
+  "scope": "standalone contract, legacy Python reference producer, Python witness checker",
+  "contract_version": "pcds-governance-v1",
+  "live_simulator_uses_contract": false,
+  "prolog_produces_contract_certificates": false,
+  "lean_certification": false,
+  "python_checks": {
+    "command": "python -m pytest -q",
+    "platform": "Windows",
+    "python": "3.14.3",
+    "passed": 287,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "native_checks_deselected": 18,
+    "contract_test_cases": 79
+  },
+  "native_checks": {
+    "command": "python -m pytest -q -m prolog tests/integration -p no:cacheprovider",
+    "platform": "WSL Ubuntu",
+    "python": "3.12.3",
+    "swipl": "9.2.9",
+    "pyswip": "0.3.3",
+    "passed": 17,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "lean_checks_deselected": 1,
+    "scope": "existing bridge regressions plus contract/core eligibility and permission agreement"
+  },
+  "additional_checks": [
+    "Ruff: src, tests, experiments",
+    "git diff --check",
+    "published CLI example produced and independently checked"
+  ],
+  "not_run": [
+    "Lean build (sources unchanged in this step)",
+    "hosted GitHub Actions",
+    "native Windows SWI-Prolog",
+    "full research study"
+  ],
+  "source_sha256": {
+    "formal/lean/lakefile.lean": "2cea4e4d002ca3fe48f6d956f3ac6dad117dc0667f228d946ab669e4437f5561",
+    "formal/lean/lean-toolchain": "55e97be96000b5e9e290c9e74482e5e317861499a5540353ce845471bded8cea",
+    "formal/lean/Wasteland/Basic.lean": "945fb2a010d78f9367e749aa3d66c5d409d6dad515e45fc1c74749ab3c0fd889",
+    "formal/lean/Wasteland/Delegation.lean": "d5ef69d24f8ba5d948a96d27fb1e22cac7356093c23ae0e714f8aece627b643a",
+    "formal/lean/Wasteland.lean": "42e07c6debfc08b6bbbb37d6a2971533ec90ec5998fac06a17707322c4794879",
+    "pyproject.toml": "55e5a946427bb953cf3dbc405363c7a1fda8ebb3c9de4ee4336440669f2fe1e1",
+    "requirements.txt": "f1f4835913ea58b0912b4f6b52691eacaa7a4afdeaf684266035f3a4d093a1e5",
+    "rules/governance.pl": "c528451c697b8ff5eeb169a8066caff68d596df32479a7df7f490c2818932846",
+    "src/pcds/__init__.py": "f8209f1058b3bf4d47f08850d59153e48ffddd4dcdeaf2e1de538893f71a19db",
+    "src/pcds/assessment.py": "fd26650d5cbb68f2536b55601f8c80fb321569f9d92eda60669ba308625bc819",
+    "src/pcds/cli.py": "9e799f5845a05751918d221f52508c9ac80b559395e7311ca8abeab538455839",
+    "src/pcds/events.py": "9d3f55b3ccf9fae5d7713a32e8092da1a3d5ec80b7e9dfe55a1cfd1bd4123730",
+    "src/pcds/experiments.py": "76cf5bff7a86d1d30f13161e380f127a05a500757c7dd842d8501109e05a9dc4",
+    "src/pcds/factory.py": "aaaa2204eeb9e27676f546353657cf1eaca35ae6e317bdc996d697177bca454b",
+    "src/pcds/governance_contract.py": "17468bae78a55cb1809269f9f60e92058885384cc41a2490e03789a537b1b919",
+    "src/pcds/governance_reference.py": "5ae91a84d1179e61cc84d389b7c8462760943d03dcdfc43ddd478f94472696fe",
+    "src/pcds/metric_definitions.py": "aefa6629185d0a8c4af450e75ad563abd078533c40127d2c1b9d4dd8ecd7f7a0",
+    "src/pcds/metrics.py": "4909da8496e074b6a35ff3373d964eb3389e4ce1b441e039aa7b99d33e1771b4",
+    "src/pcds/models.py": "f1ea602f4442eb02ada74e54f97872cf92eb21714451d941f9fbf48bd0acd0cd",
+    "src/pcds/narrative.py": "daefc45d0be32e1d830577b1ce8b2bdbdc36e21b4c1218f55e358efae997c4c7",
+    "src/pcds/paired_analysis.py": "3b4fcb5a534617f04b029e142e91499c7fdf348ebdea7257038dd3b460a30105",
+    "src/pcds/prolog_rules.py": "34f533bb61616f7702686f31c16a02726ad61cb0cbb7922fef70800628183fda",
+    "src/pcds/provenance.py": "40a00576cd4ee4332f0ee28dcf0a4c76ac7690aca4d4165e8d121ba7d146b40e",
+    "src/pcds/randomness.py": "d3ed2adbd52b0efbc05151d34c06f2f0e5f76702382de57772aaf2a0f38eb523",
+    "src/pcds/research_reporting.py": "b2fb1103d8bfcdbd3803948fae5c4c14c74d6540997a11b2a71657175212dab8",
+    "src/pcds/scenarios.py": "52cc625cdd488dd65ff6e25023bbbaf9df05bd0070f5148bc2c44dc9f9d34f1b",
+    "src/pcds/simulation.py": "d86a34da40ae58801bb9cdba131684be9c0e3c4aa18c85dd1836cba9cd20567b",
+    "src/pcds/voting.py": "da0e9a070ac77d32b804164766967d1d2cf12fe55385d808bb9fbd51a7c8a3df",
+    "toolchains.toml": "8c6091fd773ae50d2264a84210a2f6ba12a6621ccd410e41f472a1b7cc75dcdd"
+  },
+  "contract_document_sha256": "502947ca215522571ba986076fbb2591009cc1615186268dbfb21d903655cdaf",
+  "artifact_hash_normalization": "CRLF to LF before SHA-256",
+  "artifacts_sha256": {
+    "data/governance/v1/example_error.json": "8f8c0a040e42c1d43fe524446dd418ba5fbef880e8900cd1a4ecc3361217b66e",
+    "data/governance/v1/example_request.json": "67b8e909eaecf4a960a2f95a40630d9f20f27e942cd11e7ee09ac47d4646c6c9",
+    "data/governance/v1/example_response.json": "15552971a7a9729ad3fb53e0138c37a2a14c8b1f1ddd2df44c39a2df794197d7",
+    "data/governance/v1/request.schema.json": "afa9e165a22494bbb9161529c31af1050abd6197586f5063cff39cea1f6576d0",
+    "data/governance/v1/response.schema.json": "29346bb9816fdba8e3b763122a97e34b71bbcf444c9206f1a674bde83bda95ee"
+  },
+  "tests_sha256": {
+    "tests/test_governance_contract.py": "123490355bd23b9a27d7bbe519530ca5c7ec7476124979d43d3eabed188ce28d",
+    "tests/integration/test_governance_contract_prolog.py": "f94ead490da612024a9868f51ada1aebfcfd29ca57b1f3c9a82808e701f6ba7c"
+  },
+  "example_request_sha256": "209bee77997499833d17f14155b9e06e09e29430d9d86ae172fe2977bd7e9ef0",
+  "example_kind": "authored decision snapshot, not a measured simulation trajectory"
+}
