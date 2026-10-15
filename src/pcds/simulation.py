@@ -23,6 +23,8 @@ import polars as pl
 from pcds.assessment import update_preferences
 from pcds.events import EventRecorder
 from pcds.factory import create_agents_for_scenario, create_trust_graph_for_scenario
+from pcds.governance_contract import snapshot_governance_request
+from pcds.governance_prolog import decide_prolog
 from pcds.metric_definitions import METRIC_SCHEMA, NULLABLE_METRICS
 from pcds.metrics import (
     WELFARE_PROFILES,
@@ -59,6 +61,7 @@ def run_simulation(
     scenario: Scenario | str | Path | None = None,
     record_events: bool = False,
     require_prolog: bool = False,
+    governance_resolver: str = "auto",
 ) -> list[RoundResult]:
     """Run one mechanism over a fixed number of rounds and retain its full trajectory.
 
@@ -66,6 +69,8 @@ def run_simulation(
     population override applies only to generated members. Representation is measured
     before effects; survival and material wellbeing are measured afterward.
     """
+    if governance_resolver not in {"auto", "python_reference"}:
+        raise ValueError("governance_resolver must be auto or python_reference")
     if steps <= 0:
         raise ValueError("steps must be greater than zero")
     if n_agents is not None and n_agents <= 0:
@@ -108,10 +113,24 @@ def run_simulation(
         )
         # Prolog is optional: when enabled, it receives the current Python world
         # before eligibility and policy-admissibility checks are evaluated.
-        if prolog:
-            prolog.sync_world(agents, trust_graph, state)
-        eligible_agents = prolog.filter_eligible(agents) if prolog else _eligible_agents(agents)
-        outcome = _select_policy(rule, eligible_agents, trust_graph)
+        native_decision = None
+        if prolog and getattr(prolog, "available", False) and governance_resolver == "auto":
+            # Prolog owns eligibility, paths, tally and permission. The checker
+            # rejects a bad witness before any physical policy effect is applied.
+            request = snapshot_governance_request(rule, agents, trust_graph, state,
+                decision_id=f"{run_seed}:{step}", institutional_checks=True)
+            native_decision = decide_prolog(request, prolog).decision
+            by_name = {agent.name: agent for agent in agents}
+            eligible_agents = [by_name[name] for name in native_decision.eligible_voters]
+            outcome = VotingOutcome(native_decision.voted_policy, native_decision.representatives)
+            governance = prolog.info
+        else:
+            # Keep the old implementation selectable under identical institutional
+            # checks so migration comparisons do not conflate two treatments.
+            if prolog:
+                prolog.sync_world(agents, trust_graph, state)
+            eligible_agents = prolog.filter_eligible(agents) if prolog else _eligible_agents(agents)
+            outcome = _select_policy(rule, eligible_agents, trust_graph)
         selected = outcome.policy
         if recorder:
             recorder.record(
@@ -120,7 +139,11 @@ def run_simulation(
                 "vote" if eligible_agents else "no_eligible_voters_recording_default",
                 details={"eligible_voters": float(len(eligible_agents))},
             )
-        if prolog and not prolog.allocation_allowed(selected, state):
+        if native_decision is not None:
+            selected = native_decision.selected_policy
+            if recorder and native_decision.permission_override:
+                recorder.record("policy_override", selected.value, outcome.policy.value)
+        elif prolog and not prolog.allocation_allowed(selected, state):
             selected = _first_allowed_policy(prolog, state)
             if recorder:
                 recorder.record("policy_override", selected.value, outcome.policy.value)
@@ -179,6 +202,7 @@ def compare_rules(
     scenario: Scenario | str | Path | None = None,
     use_prolog: bool = False,
     require_prolog: bool = False,
+    governance_resolver: str = "auto",
 ) -> pl.DataFrame:
     """Repeat each rule on the same seed schedule and export final outcomes.
 
@@ -203,6 +227,7 @@ def compare_rules(
                 scenario=scenario,
                 use_prolog=use_prolog,
                 require_prolog=require_prolog,
+                governance_resolver=governance_resolver,
             )
             # A trial contributes one final observation to inference. Its rounds
             # are dependent observations, not additional independent replications.

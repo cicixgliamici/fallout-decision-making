@@ -1,0 +1,532 @@
+{
+  "recorded_at_utc": "2026-10-15T15:40:12.143488+00:00",
+  "purpose": "Migration conformance; no empirical or Lean verification claim",
+  "environment": {
+    "python": "3.12.3",
+    "platform": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39"
+  },
+  "source_fingerprints": {
+    "formal/lean/Wasteland/Basic.lean": "945fb2a010d78f9367e749aa3d66c5d409d6dad515e45fc1c74749ab3c0fd889",
+    "formal/lean/Wasteland/Delegation.lean": "d5ef69d24f8ba5d948a96d27fb1e22cac7356093c23ae0e714f8aece627b643a",
+    "formal/lean/Wasteland.lean": "42e07c6debfc08b6bbbb37d6a2971533ec90ec5998fac06a17707322c4794879",
+    "formal/lean/lakefile.lean": "2cea4e4d002ca3fe48f6d956f3ac6dad117dc0667f228d946ab669e4437f5561",
+    "formal/lean/lean-toolchain": "55e97be96000b5e9e290c9e74482e5e317861499a5540353ce845471bded8cea",
+    "pyproject.toml": "55e5a946427bb953cf3dbc405363c7a1fda8ebb3c9de4ee4336440669f2fe1e1",
+    "requirements.txt": "f1f4835913ea58b0912b4f6b52691eacaa7a4afdeaf684266035f3a4d093a1e5",
+    "rules/governance.pl": "629483d1655b2e92850c093222db6855a9c7b0d101ce67fe89d11b85c8691697",
+    "rules/governance_decision.pl": "2dc71decfd8f53fbf19249ee85722c17d93526109a07b22e35325da5a3d13152",
+    "src/pcds/__init__.py": "f8209f1058b3bf4d47f08850d59153e48ffddd4dcdeaf2e1de538893f71a19db",
+    "src/pcds/assessment.py": "fd26650d5cbb68f2536b55601f8c80fb321569f9d92eda60669ba308625bc819",
+    "src/pcds/cli.py": "da88b291d02a938fa6968ad21c5b9d596ceb8425c462a7e3549d47c0ef6837d8",
+    "src/pcds/events.py": "9d3f55b3ccf9fae5d7713a32e8092da1a3d5ec80b7e9dfe55a1cfd1bd4123730",
+    "src/pcds/experiments.py": "f10a2270c7ada99d1f9deb08cc803dc4af46af2d65d592b08d70dc45bf1a813f",
+    "src/pcds/factory.py": "aaaa2204eeb9e27676f546353657cf1eaca35ae6e317bdc996d697177bca454b",
+    "src/pcds/governance_contract.py": "08992c2174f0db1e0c6d348c40940305fd043ad79b81b3a9273a393efe83cc54",
+    "src/pcds/governance_prolog.py": "3cb56afb5b80451f0798983817898d1638d243cc60285c82ff4d237abe63a08c",
+    "src/pcds/governance_reference.py": "523872eca8fc48beee06406c41c0948e00f0ad6bc4f3e77dc2c0ba31e5e00c5c",
+    "src/pcds/metric_definitions.py": "aefa6629185d0a8c4af450e75ad563abd078533c40127d2c1b9d4dd8ecd7f7a0",
+    "src/pcds/metrics.py": "4909da8496e074b6a35ff3373d964eb3389e4ce1b441e039aa7b99d33e1771b4",
+    "src/pcds/models.py": "643903220ce717b96f6e4803a686fddf06a0820c0abdd9785ef7725fb8b1a26e",
+    "src/pcds/narrative.py": "24d92e70ac6f4d9d7c7f7d5e38f6217592ac47f0a196c83a5a0ddf0a884e1ff4",
+    "src/pcds/paired_analysis.py": "1cc4ad0fa20be81fdd415f4359550efeb81861f7cf9540dda65f2086a5ff5ad3",
+    "src/pcds/prolog_rules.py": "b9ee142aba026b54dc06b2bc12a1758284b7b76f04e3c65c9e6447364b1bba05",
+    "src/pcds/provenance.py": "40a00576cd4ee4332f0ee28dcf0a4c76ac7690aca4d4165e8d121ba7d146b40e",
+    "src/pcds/randomness.py": "d3ed2adbd52b0efbc05151d34c06f2f0e5f76702382de57772aaf2a0f38eb523",
+    "src/pcds/research_reporting.py": "b2fb1103d8bfcdbd3803948fae5c4c14c74d6540997a11b2a71657175212dab8",
+    "src/pcds/scenarios.py": "52cc625cdd488dd65ff6e25023bbbaf9df05bd0070f5148bc2c44dc9f9d34f1b",
+    "src/pcds/simulation.py": "1bbcfd9ac36cb2468c556b184fc7c789afa57eb8ea80593dbeddc06e7d530e7b",
+    "src/pcds/voting.py": "da0e9a070ac77d32b804164766967d1d2cf12fe55385d808bb9fbd51a7c8a3df",
+    "toolchains.toml": "8c6091fd773ae50d2264a84210a2f6ba12a6621ccd410e41f472a1b7cc75dcdd"
+  },
+  "audit_script_sha256": "6bb28c0851a55d8764b59fd3b47d59fb315773baf2c1439aaa0d030c275976cc",
+  "scenario": {
+    "name": "Shelter Alpha",
+    "description": "Vault 47: an isolated colony governance experiment, testing survival and representation under limited resources. Shelter Alpha is the retained technical scenario identifier.",
+    "agents": 8,
+    "resources": {
+      "food": 100.0,
+      "water": 100.0,
+      "medicine": 50.0,
+      "energy": 50.0,
+      "security": 50.0
+    },
+    "policies": [
+      "farming",
+      "medicine",
+      "defense",
+      "exploration"
+    ],
+    "parameters": {
+      "energy_replenishment": 2.0,
+      "energy_capacity": 50.0,
+      "treatment_medicine_per_health": 1.0,
+      "food_consumption": 0.2,
+      "water_consumption": 0.15,
+      "medicine_consumption": 0.04,
+      "scarcity_food_threshold": 0.5,
+      "scarcity_water_threshold": 0.5,
+      "scarcity_medicine_threshold": 0.05,
+      "scarcity_food_damage": 0.05,
+      "scarcity_water_damage": 0.06,
+      "scarcity_medicine_damage": 0.02,
+      "low_security_threshold": 30.0,
+      "low_security_damage": 0.02,
+      "random_health_damage_max": 0.015,
+      "death_threshold": 0.05,
+      "decision": {
+        "mode": "adaptive",
+        "general_accuracy": 0.55,
+        "expert_accuracy": 0.9,
+        "observation_noise": 0.6,
+        "effect_noise": 0.6,
+        "planning_horizon": 3,
+        "preference_weight": 0.01,
+        "reserve_weight": 0.02
+      },
+      "metrics": {
+        "welfare_weights": {
+          "survival": 0.65,
+          "health": 0.25,
+          "resources": 0.1
+        },
+        "resource_reference": {
+          "food": 100.0,
+          "water": 100.0,
+          "medicine": 50.0,
+          "energy": 50.0,
+          "security": 50.0
+        }
+      },
+      "shock": {
+        "probability": 0.22,
+        "food_loss": 12.0,
+        "water_loss": 10.0,
+        "medicine_loss": 4.0,
+        "security_loss": 6.0,
+        "health_damage": 0.025
+      },
+      "policy_impacts": {
+        "farming": {
+          "energy_cost": 2.0,
+          "food_delta": 14.0,
+          "water_delta": 12.0,
+          "medicine_delta": 0.0,
+          "security_delta": 0.0,
+          "health_boost": 0.0,
+          "injury_probability": 0.0,
+          "injury_min": 0.0,
+          "injury_max": 0.0
+        },
+        "medicine": {
+          "energy_cost": 2.0,
+          "food_delta": 0.0,
+          "water_delta": 0.0,
+          "medicine_delta": 8.0,
+          "security_delta": 0.0,
+          "health_boost": 0.08,
+          "injury_probability": 0.0,
+          "injury_min": 0.0,
+          "injury_max": 0.0
+        },
+        "defense": {
+          "energy_cost": 4.0,
+          "food_delta": 0.0,
+          "water_delta": 0.0,
+          "medicine_delta": 0.0,
+          "security_delta": 9.0,
+          "health_boost": 0.0,
+          "injury_probability": 0.0,
+          "injury_min": 0.0,
+          "injury_max": 0.0
+        },
+        "exploration": {
+          "energy_cost": 2.0,
+          "food_delta": 7.0,
+          "water_delta": 5.0,
+          "medicine_delta": 2.5,
+          "security_delta": 0.0,
+          "health_boost": 0.0,
+          "injury_probability": 0.02,
+          "injury_min": 0.08,
+          "injury_max": 0.2
+        }
+      }
+    },
+    "trust_topology": "expertise_clustered",
+    "trust_probability": 0.18,
+    "trust_edges": null,
+    "role_distribution": null
+  },
+  "seeds": [
+    1,
+    42,
+    123
+  ],
+  "steps": 40,
+  "trajectory_pairs": [
+    {
+      "rule": "majority",
+      "seed": 1,
+      "rounds": 40,
+      "different_rounds": [],
+      "inactive_rounds": 0,
+      "blocked_rounds": 0,
+      "native_governance": {
+        "mode": "required",
+        "backend": "swipl",
+        "swipl_version": "9.2.9",
+        "pyswip_version": "0.3.3",
+        "rules_sha256": "629483d1655b2e92850c093222db6855a9c7b0d101ce67fe89d11b85c8691697",
+        "fallback_reason": null,
+        "resolver": "prolog",
+        "resolver_sha256": "2dc71decfd8f53fbf19249ee85722c17d93526109a07b22e35325da5a3d13152",
+        "contract_version": "pcds-governance-v1"
+      },
+      "reference_governance": {
+        "mode": "required",
+        "backend": "swipl",
+        "swipl_version": "9.2.9",
+        "pyswip_version": "0.3.3",
+        "rules_sha256": "629483d1655b2e92850c093222db6855a9c7b0d101ce67fe89d11b85c8691697",
+        "fallback_reason": null,
+        "resolver": "python",
+        "resolver_sha256": null,
+        "contract_version": null
+      }
+    },
+    {
+      "rule": "majority",
+      "seed": 42,
+      "rounds": 40,
+      "different_rounds": [],
+      "inactive_rounds": 0,
+      "blocked_rounds": 0,
+      "native_governance": {
+        "mode": "required",
+        "backend": "swipl",
+        "swipl_version": "9.2.9",
+        "pyswip_version": "0.3.3",
+        "rules_sha256": "629483d1655b2e92850c093222db6855a9c7b0d101ce67fe89d11b85c8691697",
+        "fallback_reason": null,
+        "resolver": "prolog",
+        "resolver_sha256": "2dc71decfd8f53fbf19249ee85722c17d93526109a07b22e35325da5a3d13152",
+        "contract_version": "pcds-governance-v1"
+      },
+      "reference_governance": {
+        "mode": "required",
+        "backend": "swipl",
+        "swipl_version": "9.2.9",
+        "pyswip_version": "0.3.3",
+        "rules_sha256": "629483d1655b2e92850c093222db6855a9c7b0d101ce67fe89d11b85c8691697",
+        "fallback_reason": null,
+        "resolver": "python",
+        "resolver_sha256": null,
+        "contract_version": null
+      }
+    },
+    {
+      "rule": "majority",
+      "seed": 123,
+      "rounds": 40,
+      "different_rounds": [],
+      "inactive_rounds": 0,
+      "blocked_rounds": 0,
+      "native_governance": {
+        "mode": "required",
+        "backend": "swipl",
+        "swipl_version": "9.2.9",
+        "pyswip_version": "0.3.3",
+        "rules_sha256": "629483d1655b2e92850c093222db6855a9c7b0d101ce67fe89d11b85c8691697",
+        "fallback_reason": null,
+        "resolver": "prolog",
+        "resolver_sha256": "2dc71decfd8f53fbf19249ee85722c17d93526109a07b22e35325da5a3d13152",
+        "contract_version": "pcds-governance-v1"
+      },
+      "reference_governance": {
+        "mode": "required",
+        "backend": "swipl",
+        "swipl_version": "9.2.9",
+        "pyswip_version": "0.3.3",
+        "rules_sha256": "629483d1655b2e92850c093222db6855a9c7b0d101ce67fe89d11b85c8691697",
+        "fallback_reason": null,
+        "resolver": "python",
+        "resolver_sha256": null,
+        "contract_version": null
+      }
+    },
+    {
+      "rule": "approval",
+      "seed": 1,
+      "rounds": 40,
+      "different_rounds": [],
+      "inactive_rounds": 0,
+      "blocked_rounds": 0,
+      "native_governance": {
+        "mode": "required",
+        "backend": "swipl",
+        "swipl_version": "9.2.9",
+        "pyswip_version": "0.3.3",
+        "rules_sha256": "629483d1655b2e92850c093222db6855a9c7b0d101ce67fe89d11b85c8691697",
+        "fallback_reason": null,
+        "resolver": "prolog",
+        "resolver_sha256": "2dc71decfd8f53fbf19249ee85722c17d93526109a07b22e35325da5a3d13152",
+        "contract_version": "pcds-governance-v1"
+      },
+      "reference_governance": {
+        "mode": "required",
+        "backend": "swipl",
+        "swipl_version": "9.2.9",
+        "pyswip_version": "0.3.3",
+        "rules_sha256": "629483d1655b2e92850c093222db6855a9c7b0d101ce67fe89d11b85c8691697",
+        "fallback_reason": null,
+        "resolver": "python",
+        "resolver_sha256": null,
+        "contract_version": null
+      }
+    },
+    {
+      "rule": "approval",
+      "seed": 42,
+      "rounds": 40,
+      "different_rounds": [],
+      "inactive_rounds": 0,
+      "blocked_rounds": 0,
+      "native_governance": {
+        "mode": "required",
+        "backend": "swipl",
+        "swipl_version": "9.2.9",
+        "pyswip_version": "0.3.3",
+        "rules_sha256": "629483d1655b2e92850c093222db6855a9c7b0d101ce67fe89d11b85c8691697",
+        "fallback_reason": null,
+        "resolver": "prolog",
+        "resolver_sha256": "2dc71decfd8f53fbf19249ee85722c17d93526109a07b22e35325da5a3d13152",
+        "contract_version": "pcds-governance-v1"
+      },
+      "reference_governance": {
+        "mode": "required",
+        "backend": "swipl",
+        "swipl_version": "9.2.9",
+        "pyswip_version": "0.3.3",
+        "rules_sha256": "629483d1655b2e92850c093222db6855a9c7b0d101ce67fe89d11b85c8691697",
+        "fallback_reason": null,
+        "resolver": "python",
+        "resolver_sha256": null,
+        "contract_version": null
+      }
+    },
+    {
+      "rule": "approval",
+      "seed": 123,
+      "rounds": 40,
+      "different_rounds": [],
+      "inactive_rounds": 0,
+      "blocked_rounds": 0,
+      "native_governance": {
+        "mode": "required",
+        "backend": "swipl",
+        "swipl_version": "9.2.9",
+        "pyswip_version": "0.3.3",
+        "rules_sha256": "629483d1655b2e92850c093222db6855a9c7b0d101ce67fe89d11b85c8691697",
+        "fallback_reason": null,
+        "resolver": "prolog",
+        "resolver_sha256": "2dc71decfd8f53fbf19249ee85722c17d93526109a07b22e35325da5a3d13152",
+        "contract_version": "pcds-governance-v1"
+      },
+      "reference_governance": {
+        "mode": "required",
+        "backend": "swipl",
+        "swipl_version": "9.2.9",
+        "pyswip_version": "0.3.3",
+        "rules_sha256": "629483d1655b2e92850c093222db6855a9c7b0d101ce67fe89d11b85c8691697",
+        "fallback_reason": null,
+        "resolver": "python",
+        "resolver_sha256": null,
+        "contract_version": null
+      }
+    },
+    {
+      "rule": "expert_delegation",
+      "seed": 1,
+      "rounds": 40,
+      "different_rounds": [],
+      "inactive_rounds": 0,
+      "blocked_rounds": 0,
+      "native_governance": {
+        "mode": "required",
+        "backend": "swipl",
+        "swipl_version": "9.2.9",
+        "pyswip_version": "0.3.3",
+        "rules_sha256": "629483d1655b2e92850c093222db6855a9c7b0d101ce67fe89d11b85c8691697",
+        "fallback_reason": null,
+        "resolver": "prolog",
+        "resolver_sha256": "2dc71decfd8f53fbf19249ee85722c17d93526109a07b22e35325da5a3d13152",
+        "contract_version": "pcds-governance-v1"
+      },
+      "reference_governance": {
+        "mode": "required",
+        "backend": "swipl",
+        "swipl_version": "9.2.9",
+        "pyswip_version": "0.3.3",
+        "rules_sha256": "629483d1655b2e92850c093222db6855a9c7b0d101ce67fe89d11b85c8691697",
+        "fallback_reason": null,
+        "resolver": "python",
+        "resolver_sha256": null,
+        "contract_version": null
+      }
+    },
+    {
+      "rule": "expert_delegation",
+      "seed": 42,
+      "rounds": 40,
+      "different_rounds": [],
+      "inactive_rounds": 0,
+      "blocked_rounds": 0,
+      "native_governance": {
+        "mode": "required",
+        "backend": "swipl",
+        "swipl_version": "9.2.9",
+        "pyswip_version": "0.3.3",
+        "rules_sha256": "629483d1655b2e92850c093222db6855a9c7b0d101ce67fe89d11b85c8691697",
+        "fallback_reason": null,
+        "resolver": "prolog",
+        "resolver_sha256": "2dc71decfd8f53fbf19249ee85722c17d93526109a07b22e35325da5a3d13152",
+        "contract_version": "pcds-governance-v1"
+      },
+      "reference_governance": {
+        "mode": "required",
+        "backend": "swipl",
+        "swipl_version": "9.2.9",
+        "pyswip_version": "0.3.3",
+        "rules_sha256": "629483d1655b2e92850c093222db6855a9c7b0d101ce67fe89d11b85c8691697",
+        "fallback_reason": null,
+        "resolver": "python",
+        "resolver_sha256": null,
+        "contract_version": null
+      }
+    },
+    {
+      "rule": "expert_delegation",
+      "seed": 123,
+      "rounds": 40,
+      "different_rounds": [],
+      "inactive_rounds": 0,
+      "blocked_rounds": 0,
+      "native_governance": {
+        "mode": "required",
+        "backend": "swipl",
+        "swipl_version": "9.2.9",
+        "pyswip_version": "0.3.3",
+        "rules_sha256": "629483d1655b2e92850c093222db6855a9c7b0d101ce67fe89d11b85c8691697",
+        "fallback_reason": null,
+        "resolver": "prolog",
+        "resolver_sha256": "2dc71decfd8f53fbf19249ee85722c17d93526109a07b22e35325da5a3d13152",
+        "contract_version": "pcds-governance-v1"
+      },
+      "reference_governance": {
+        "mode": "required",
+        "backend": "swipl",
+        "swipl_version": "9.2.9",
+        "pyswip_version": "0.3.3",
+        "rules_sha256": "629483d1655b2e92850c093222db6855a9c7b0d101ce67fe89d11b85c8691697",
+        "fallback_reason": null,
+        "resolver": "python",
+        "resolver_sha256": null,
+        "contract_version": null
+      }
+    },
+    {
+      "rule": "liquid_democracy",
+      "seed": 1,
+      "rounds": 40,
+      "different_rounds": [],
+      "inactive_rounds": 0,
+      "blocked_rounds": 0,
+      "native_governance": {
+        "mode": "required",
+        "backend": "swipl",
+        "swipl_version": "9.2.9",
+        "pyswip_version": "0.3.3",
+        "rules_sha256": "629483d1655b2e92850c093222db6855a9c7b0d101ce67fe89d11b85c8691697",
+        "fallback_reason": null,
+        "resolver": "prolog",
+        "resolver_sha256": "2dc71decfd8f53fbf19249ee85722c17d93526109a07b22e35325da5a3d13152",
+        "contract_version": "pcds-governance-v1"
+      },
+      "reference_governance": {
+        "mode": "required",
+        "backend": "swipl",
+        "swipl_version": "9.2.9",
+        "pyswip_version": "0.3.3",
+        "rules_sha256": "629483d1655b2e92850c093222db6855a9c7b0d101ce67fe89d11b85c8691697",
+        "fallback_reason": null,
+        "resolver": "python",
+        "resolver_sha256": null,
+        "contract_version": null
+      }
+    },
+    {
+      "rule": "liquid_democracy",
+      "seed": 42,
+      "rounds": 40,
+      "different_rounds": [],
+      "inactive_rounds": 0,
+      "blocked_rounds": 0,
+      "native_governance": {
+        "mode": "required",
+        "backend": "swipl",
+        "swipl_version": "9.2.9",
+        "pyswip_version": "0.3.3",
+        "rules_sha256": "629483d1655b2e92850c093222db6855a9c7b0d101ce67fe89d11b85c8691697",
+        "fallback_reason": null,
+        "resolver": "prolog",
+        "resolver_sha256": "2dc71decfd8f53fbf19249ee85722c17d93526109a07b22e35325da5a3d13152",
+        "contract_version": "pcds-governance-v1"
+      },
+      "reference_governance": {
+        "mode": "required",
+        "backend": "swipl",
+        "swipl_version": "9.2.9",
+        "pyswip_version": "0.3.3",
+        "rules_sha256": "629483d1655b2e92850c093222db6855a9c7b0d101ce67fe89d11b85c8691697",
+        "fallback_reason": null,
+        "resolver": "python",
+        "resolver_sha256": null,
+        "contract_version": null
+      }
+    },
+    {
+      "rule": "liquid_democracy",
+      "seed": 123,
+      "rounds": 40,
+      "different_rounds": [],
+      "inactive_rounds": 0,
+      "blocked_rounds": 0,
+      "native_governance": {
+        "mode": "required",
+        "backend": "swipl",
+        "swipl_version": "9.2.9",
+        "pyswip_version": "0.3.3",
+        "rules_sha256": "629483d1655b2e92850c093222db6855a9c7b0d101ce67fe89d11b85c8691697",
+        "fallback_reason": null,
+        "resolver": "prolog",
+        "resolver_sha256": "2dc71decfd8f53fbf19249ee85722c17d93526109a07b22e35325da5a3d13152",
+        "contract_version": "pcds-governance-v1"
+      },
+      "reference_governance": {
+        "mode": "required",
+        "backend": "swipl",
+        "swipl_version": "9.2.9",
+        "pyswip_version": "0.3.3",
+        "rules_sha256": "629483d1655b2e92850c093222db6855a9c7b0d101ce67fe89d11b85c8691697",
+        "fallback_reason": null,
+        "resolver": "python",
+        "resolver_sha256": null,
+        "contract_version": null
+      }
+    }
+  ],
+  "compared_rounds": 480,
+  "example_matches_reference": true,
+  "example_response_sha256": "33d8b3eb522f23cc8a0d3cb6091d26121bda681c526daca661689d86f57885b3",
+  "passed": true
+}

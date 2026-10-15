@@ -20,8 +20,119 @@ empirically grounded scientific study.
 | Metrics | Separate health, survival, satisfaction, and ballot control; explicit welfare assumptions | Normative indices do not define one universally best institution. |
 | Research argument | Primary-source motivation, assumption register, ODD specification, and exploratory protocol | No empirical calibration or comprehensive global sensitivity study. |
 | Reporting | Readable outcome/paired tables, figures, coverage, and source provenance | Visual clarity does not establish external validity. |
-| Prolog | Pinned required mode, recorded backends, and 17 real SWI-Prolog integration checks | Voting/delegation remains Python; native Windows SWI-Prolog was not checked. |
-| Lean | Pinned 4.19.0 toolchain and a separately passing build of the small formal package | No proof of delegation termination, vote conservation, or simulator correctness. |
+| Prolog | Complete governance decisions and witnesses, matched Python comparisons, 112 real SWI-Prolog checks | Finite conformance coverage; native Windows SWI-Prolog was not checked. |
+| Lean | Explicit library build, 17 new invariant/supporting theorems, and kernel-checked concrete governance certificates | JSON/literal adapter and universal runtime equivalence are not proved; physics is outside scope. |
+
+## Lean Explanation Pass: 2026-10-15
+
+- Added English explanations across the five maintained Lean files: data types,
+  ordered expert selection, exact comparisons, delegation and tallying, permission
+  overrides, concrete conformance and the reasoning behind the proof tactics.
+  Comments distinguish the introductory examples from the contract model and
+  identify external validation assumptions and remaining proof obligations.
+- `lake build Wasteland` passed. A before/after comparison excluding comments
+  and layout confirmed unchanged code and proof tokens in all five files. This
+  pass added no theorem or mechanism and requires no numerical study rerun.
+  Comment edits change source fingerprints; earlier certification receipts and
+  evidence retain their original identities and have not been rewritten.
+
+## First Lean Certificates: 2026-10-15
+
+- **Partially implemented governance certification:**
+  [the independent Lean model](../formal/lean/Wasteland/Governance.lean) computes
+  contract-v1 decisions, including ordered greedy delegation, exact fractions,
+  cycle/depth stopping, contributions, tally, deterministic winner, permissions
+  and overrides. Its 17 new theorems prove selected invariants and supporting
+  lemmas. In particular: bounded paths, cycle fallback, ballot count and voter
+  coverage, winner maximality, tie preservation and selected-policy permission.
+  Holder eligibility assumes next-hop closure; voter uniqueness assumes unique
+  electorate identities. General declarative refinement remains open.
+- Added [governance_lean.py](../src/pcds/governance_lean.py) and optional
+  `pcds certify-governance`. It translates literal request/claim data, invokes the
+  pinned Lean 4.19.0 library, and constructs a concrete `Conforms` proof with
+  `by decide`, checked by the kernel. It does not call the Python semantic
+  checker or use `native_decide`. Successful output includes readable proof
+  source, compiled artifact and a receipt with hashes, source identity, axiom
+  report and explicit scope. Failure cannot create a successful receipt.
+- **Corrected the earlier build-evidence gap:** the library had no default
+  target, so previous `lake build` success did not establish module compilation.
+  Added a default target, changed the test to `lake build Wasteland`, required
+  the compiled governance module, and fixed a standalone documentation-comment
+  syntax error exposed in the older delegation file. The library now actually
+  compiles. Historical evidence is retained with this correction, not relabeled.
+- **309 ordinary Python tests passed** (117 native cases deselected), and
+  **five separately selected Lean integration tests passed** (112 Prolog cases
+  deselected), on Windows/Python 3.14.3. They check the explicit build, actual
+  CLI proof/receipt, a rejected forged winner, eight valid rule/electorate cases,
+  and proofs rejecting 15 altered witnesses. Cases include cycle fallback,
+  tied trust, exact fraction transport, empty electorates, unusual names and
+  reordered representative maps. Ruff and whitespace checks passed. The CI Lean
+  job now selects all Lean tests and installs their Python dependencies; hosted
+  CI was not observed.
+- Produced a fresh response using actual SWI-Prolog 9.2.9/PySwip 0.3.3 in WSL,
+  then certified it with Lean on Windows. The authored example contains an
+  intermediate-node cycle and a forbidden winning policy. Retained
+  [proof source and validation record](evidence/2026-10-15/lean_certification)
+  document the exact inputs, hashes, environments and scope. The concrete proof
+  reports the standard `propext` axiom; no custom axiom or `sorry` is introduced.
+- JSON/schema validation, SHA-256 and faithful literal translation remain trusted
+  Python responsibilities. Certification does not attest backend identity or
+  prove arbitrary Python/Prolog executions, physical dynamics or empirical
+  validity. The simulation does not automatically invoke Lean. Its mechanics,
+  RNG keys and export schema are unchanged, so numerical studies need no
+  regeneration for a mechanism change. No full research study or full native
+  Prolog regression rerun was performed in this step; prior migration evidence
+  retains its stated scope. See [the certification guide](lean_certification.md).
+
+## Prolog Voting and Delegation Migration: 2026-10-15
+
+- **Implemented:** the live simulator now uses the pure Prolog contract resolver
+  when its native backend is available. Prolog owns eligibility, ordered expert
+  selection, single-hop/liquid delegation, cycle/depth handling, contributions,
+  tally, deterministic winner and post-election permissions. Every returned
+  request-bound witness is checked independently before physical policy effects.
+  This makes the governance procedure inspectable and separable from dynamics;
+  no new physical or narrative mechanic was added.
+- Added the exact snapshot adapter in `governance_prolog.py`, connected it to
+  simulation and CLI, and retained `voting.py` as the migration reference.
+  `--governance-resolver python_reference` on `run`, `compare` and `suite` keeps
+  the previous resolver under the same institutional checks. `pcds govern
+  --backend prolog` produces a standalone native decision/certificate and never
+  falls back. Missing/version-mismatched backends and malformed/query/witness
+  failures remain explicit errors. Optional startup fallback stays recorded.
+- New round/event/CSV/suite provenance distinguishes the institutional backend
+  from the actual `resolver`, `resolver_sha256` and `contract_version`. Pairing
+  rejects mixed or partial identities while fully historical data stays readable.
+  The existing scenario format, commands, RNG keys and Python-only default remain.
+  Native snapshots enforce the declared contract domain. Certificates are checked
+  each round but not retained in ordinary simulation exports.
+- **296 ordinary Python tests passed**, with 113 native checks deselected;
+  **112 real SWI-Prolog tests passed**, with one Lean check deselected, in
+  WSL/Python 3.12.3 using SWI-Prolog 9.2.9 and PySwip 0.3.3. Coverage includes
+  complete seeded snapshots, exact rational comparisons, trust/policy ties,
+  cycles, depth limits, elders, unusual identities, permissions, empty/dead
+  electorates, failed actions, full trajectories, parallel workers and CLI/suite
+  metadata. Ruff and whitespace checks passed. Lean sources were unchanged and
+  their separate build was not rerun; no new Lean theorem is claimed.
+- The maintained [migration audit](../experiments/check_governance_migration.py)
+  matched all **12 adaptive trajectory pairs / 480 rounds** across four rules
+  and seeds 1, 42, 123, with eight residents and 40 rounds per trajectory.
+  All recorded fields except backend identity matched, including effects,
+  representative ownership, events and random draws. Its
+  [retained record](evidence/2026-10-15/prolog_migration/migration_validation.json)
+  includes complete inputs, source hashes and both runtime identities. The
+  [native response](evidence/2026-10-15/prolog_migration/prolog_response.json)
+  matches the published authored cycle/override example. Test evidence and its
+  scope are in [checks.json](evidence/2026-10-15/prolog_migration/checks.json).
+- Existing experiments retain their historical provenance. The matched checks
+  support migration compatibility within their coverage, not universal equivalence
+  or a claim that one institution performs better. Regenerate a study to describe
+  its results as native Prolog executions. No full research suite or hosted CI was
+  run. Python still owns private assessments, physics and witness checking; Lean
+  soundness and connection to executable decisions remain future work.
+
+The following dated sections retain the evidence and implementation boundaries
+of their respective milestones.
 
 ## Governance Contract: 2026-10-15
 

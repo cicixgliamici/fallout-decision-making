@@ -103,7 +103,7 @@ external narrative or user intervention during a research trajectory.
 | Submodel | Definition and implementation |
 | --- | --- |
 | Private assessment | Noisy stock/effect scoring, perceived affordability, expected stock-budgeted healing; [assessment.py](../src/pcds/assessment.py), [model equations](model.md). |
-| Voting/delegation | First-choice plurality, top-two approval, one-hop expertise delegation, depth-3 liquid chains with cycle fallback; [voting.py](../src/pcds/voting.py), [methods](methods.md). |
+| Voting/delegation | First-choice plurality, top-two approval, one-hop expertise delegation, depth-3 liquid chains with cycle fallback; [Prolog resolver](../rules/governance_decision.pl), retained [Python reference](../src/pcds/voting.py), [methods](methods.md). |
 | Physical budgets | Upfront costs, bounded routine power, policy effects, proportional treatment and policy injuries; [accounting rules](physical_accounting.md). |
 | External pressure | Routine consumption, fixed shortage penalties, keyed shocks and per-resident damage, irreversible threshold deaths; [simulation.py](../src/pcds/simulation.py). |
 | Measurement | Separate survival, population/conditional health, congruence, ballot ownership, stocks and explicit normative welfare; [metrics](metrics.md). |

@@ -10,6 +10,7 @@ trajectory; compare repeats rules; suite also varies experimental conditions.
 from __future__ import annotations
 
 from contextlib import contextmanager
+from enum import Enum
 from pathlib import Path
 
 import polars as pl
@@ -18,6 +19,8 @@ import typer
 from pcds.experiments import run_experiment_suite, summarize_rules
 from pcds.governance_contract import GovernanceContractError, parse_request
 from pcds.governance_reference import handle_governance_request, verify_governance_response
+from pcds.governance_prolog import handle_prolog_request
+from pcds.governance_lean import LeanCertificationError, certify_governance, parse_success
 from pcds.models import RoundResult
 from pcds.narrative import export_event_log, load_profile, render_report
 from pcds.paired_analysis import build_paired_differences, summarize_paired_effects
@@ -28,12 +31,22 @@ from pcds.simulation import compare_rules, run_simulation
 app = typer.Typer(help="Post-Crisis Collective Decision Simulator")
 
 
+class GovernanceResolver(str, Enum):
+    AUTO = "auto"
+    PYTHON_REFERENCE = "python_reference"
+
+
+class ContractBackend(str, Enum):
+    PYTHON_REFERENCE = "python_reference"
+    PROLOG = "prolog"
+
+
 @contextmanager
 def _backend_errors():
     """Expose backend failures as actionable CLI errors without successful artifacts."""
     try:
         yield
-    except PrologBackendError as error:
+    except (PrologBackendError, GovernanceContractError) as error:
         typer.echo(f"Governance backend error: {error}", err=True)
         raise typer.Exit(code=1) from error
 
@@ -54,6 +67,7 @@ def run(
     report: Path | None = typer.Option(None, help="Write a deterministic text report."),
     event_log: Path | None = typer.Option(None, help="Write a neutral JSON event trace."),
     profile: str = typer.Option("vault47", help="Report profile: vault47, neutral, or JSON path."),
+    governance_resolver: GovernanceResolver = typer.Option(GovernanceResolver.AUTO),
 ) -> None:
     """Print one trajectory's final material outcomes and decision-time representation."""
     # Resolve presentation before running; an invalid profile must not waste a simulation.
@@ -75,6 +89,7 @@ def run(
             scenario=scenario_configuration,
             use_prolog=use_prolog,
             require_prolog=require_prolog,
+            governance_resolver=governance_resolver.value,
             record_events=report is not None or event_log is not None,
         )
     _print_run_summary(results[-1])
@@ -98,6 +113,7 @@ def _print_run_summary(last: RoundResult) -> None:
     """Keep the established terminal summary separate from optional artifacts."""
     typer.echo(f"Rule: {last.rule}")
     typer.echo(f"Governance checks: {last.governance.mode} | Backend: {last.governance.backend}")
+    typer.echo(f"Voting resolver: {last.governance.resolver}")
     if last.governance.swipl_version:
         typer.echo(f"SWI-Prolog version: {last.governance.swipl_version}")
     if last.governance.fallback_reason:
@@ -143,12 +159,14 @@ def compare(
     output: Path = typer.Option(Path("results/comparison.csv"), help="CSV output path."),
     use_prolog: bool = typer.Option(False, help="Enable checks with a recorded fallback if needed."),
     require_prolog: bool = typer.Option(False, help="Require the pinned real Prolog backend."),
+    governance_resolver: GovernanceResolver = typer.Option(GovernanceResolver.AUTO),
 ) -> None:
     """Export matched rule outcomes, per-seed differences, and paired effect intervals."""
     output.parent.mkdir(parents=True, exist_ok=True)
     with _backend_errors():
         df = compare_rules(runs=runs, steps=steps, n_agents=agents, seed=seed, scenario=scenario,
-                           use_prolog=use_prolog, require_prolog=require_prolog)
+                           use_prolog=use_prolog, require_prolog=require_prolog,
+                           governance_resolver=governance_resolver.value)
     df.write_csv(output)
     # A standalone comparison is one condition. Label it explicitly to reuse the
     # same pairing keys as the multi-condition research suite.
@@ -187,6 +205,7 @@ def suite(
     workers: int = typer.Option(1, min=1, help="Independent worker processes for suite conditions."),
     use_prolog: bool = typer.Option(False, help="Enable checks with a recorded fallback if needed."),
     require_prolog: bool = typer.Option(False, help="Require the pinned real Prolog backend."),
+    governance_resolver: GovernanceResolver = typer.Option(GovernanceResolver.AUTO),
 ) -> None:
     """Run all predefined conditions and report where their review artifacts were written."""
     with _backend_errors():
@@ -198,6 +217,7 @@ def suite(
             seed=seed,
             sensitivity=sensitivity,
             workers=workers,
+            governance_resolver=governance_resolver.value,
             use_prolog=use_prolog,
             require_prolog=require_prolog,
         )
@@ -209,16 +229,19 @@ def suite(
 def govern(
     request: Path = typer.Option(..., exists=True, dir_okay=False, help="Governance request JSON."),
     output: Path = typer.Option(..., help="Decision/certificate or explicit error JSON."),
+    backend: ContractBackend = typer.Option(ContractBackend.PYTHON_REFERENCE),
 ) -> None:
-    """Evaluate the versioned contract using the current Python reference resolver."""
+    """Evaluate the contract with an explicit resolver; Prolog never falls back."""
     if request.resolve() == output.resolve():
         raise typer.BadParameter("request and output must use different paths")
-    response = handle_governance_request(request.read_text(encoding="utf-8"))
+    handler = handle_prolog_request if backend == ContractBackend.PROLOG else handle_governance_request
+    response = handler(request.read_text(encoding="utf-8"))
     _write_artifact(output, response.model_dump_json(indent=2) + "\n")
     if response.status == "error":
         typer.echo(f"Governance contract error: {response.error.code}: {response.error.message}", err=True)
         raise typer.Exit(code=1)
-    typer.echo("Python reference decision written; certificate has not been checked by Lean.")
+    label = "Prolog" if backend == ContractBackend.PROLOG else "Python reference"
+    typer.echo(f"{label} decision written; certificate has not been checked by Lean.")
 
 
 @app.command("check-governance")
@@ -234,6 +257,25 @@ def check_governance(
         typer.echo(f"Governance contract error: {error.problem.code}: {error}", err=True)
         raise typer.Exit(code=1) from error
     typer.echo("Certificate conforms to the Python contract checker; no Lean verification performed.")
+
+
+@app.command("certify-governance")
+def certify_governance_command(
+    request: Path = typer.Option(..., exists=True, dir_okay=False, help="Original request JSON."),
+    response: Path = typer.Option(..., exists=True, dir_okay=False, help="Decision/certificate JSON."),
+    output_dir: Path = typer.Option(..., help="New directory for Lean source, compiled proof and receipt."),
+) -> None:
+    """Ask pinned Lean to prove conformance of one translated governance witness."""
+    try:
+        parsed = parse_request(request.read_text(encoding="utf-8"))
+        claim = parse_success(response.read_text(encoding="utf-8"))
+        paths = certify_governance(parsed, claim, output_dir)
+    except (GovernanceContractError, LeanCertificationError, OSError) as error:
+        typer.echo(f"Lean certification failed: {error}", err=True)
+        raise typer.Exit(code=1) from error
+    for label, path in paths.items():
+        typer.echo(f"{label}: {path}")
+    typer.echo("Lean proved this translated governance decision; physical dynamics and backend identity are outside scope.")
 
 
 if __name__ == "__main__":

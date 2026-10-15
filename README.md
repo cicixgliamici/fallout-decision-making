@@ -156,14 +156,16 @@ implemented; specific infrastructure incidents remain future work.
 The [versioned governance contract](docs/governance_contract.md) specifies current
 decision semantics, published JSON schemas, request-bound delegation witnesses,
 and errors. Standalone `pcds govern` and `pcds check-governance` commands provide
-a Python reference producer/checker before the planned Prolog/Lean migration;
-they do not replace the live simulator's decision path or certify it in Lean.
+both a Python reference and a real Prolog producer, plus an independent Python
+witness checker. With a loaded Prolog backend, the live simulator uses the
+Prolog resolver. [First Lean certificates](docs/lean_certification.md) now check
+concrete translated decisions; universal implementation equivalence remains open.
 
 | Component | Responsibility | Boundary |
 | --- | --- | --- |
-| Python | Community generation, private assessments, voting, physical dynamics, metrics, experiments, and CLI | The main runnable research prototype. |
-| Prolog | Optional voting-eligibility and policy-admissibility checks | Delegation resolution stays in Python; declared Prolog delegation predicates are not called by that resolver. |
-| Lean 4 | Small definitions of ballots, winners, and a delegation relation | Current proofs largely unpack definitions; they do not verify the simulator or its results. |
+| Python | Community generation, private assessments, physical dynamics, metrics, experiments, CLI and witness checking | Retains a voting reference for migration and for runs without Prolog. |
+| Prolog | Eligibility, voting, delegation paths, tally, policy permission and contract witnesses | Used when the backend is available; does not own physical dynamics or private assessments. |
+| Lean 4 | Contract-v1 decision model, selected invariants, and kernel-checked concrete witnesses | JSON translation and runtime equivalence remain outside the proof; physical dynamics are not certified. |
 
 Without a Prolog flag, governance admissibility checks are not applied.
 `--use-prolog` retains an explicitly recorded Python fallback if loading fails.
@@ -171,6 +173,18 @@ For research, `--require-prolog` on `run`, `compare`, or `suite` requires
 SWI-Prolog 9.2.9 and PySwip 0.3.3 and fails explicitly otherwise. Actual backends,
 versions, and rule hashes accompany new exports. Setup and separate native test
 commands are in [governance rules](docs/rules.md#pinned-toolchains-and-separate-checks).
+Use `--governance-resolver python_reference` with the same Prolog flags to compare
+against the old resolver under identical institutional checks. New exports record
+the actual voting resolver, its Prolog source hash and contract version separately
+from the institutional backend. For a standalone native decision:
+
+```bash
+pcds govern --backend prolog --request data/governance/v1/example_request.json --output results/prolog-response.json
+pcds check-governance --request data/governance/v1/example_request.json --response results/prolog-response.json
+python experiments/check_governance_migration.py --output results/migration
+pcds certify-governance --request data/governance/v1/example_request.json --response results/prolog-response.json --output-dir results/lean-certificate
+```
+
 To check the Lean sources separately, the pinned Lean 4.19.0 toolchain is needed:
 
 ```bash

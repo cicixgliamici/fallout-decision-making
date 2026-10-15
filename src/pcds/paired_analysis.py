@@ -86,6 +86,12 @@ def governance_pairing_errors(raw: pl.DataFrame) -> list[str]:
     A partially supplied backend identity is rejected rather than treated as legacy.
     """
     columns = [f"governance_{field}" for field in GovernanceBackend.model_fields]
+    migration = {f"governance_{field}" for field in
+                 ("resolver", "resolver_sha256", "contract_version")}
+    # Historical records predate resolver identity. Preserve their readability,
+    # without attributing a native tally to an institutional backend alone.
+    if not migration.intersection(raw.columns):
+        columns = [column for column in columns if column not in migration]
     present = set(columns).intersection(raw.columns)
     if not present:
         return []
@@ -97,6 +103,18 @@ def governance_pairing_errors(raw: pl.DataFrame) -> list[str]:
         if identities.height != 1:
             errors.append("paired rules have different governance backends or rule identities")
         for row in identities.to_dicts():
+            if "governance_resolver" in row and row["governance_resolver"] not in {"python", "prolog"}:
+                errors.append("invalid governance resolver")
+            if row.get("governance_resolver") == "python" and (
+                row.get("governance_resolver_sha256") or row.get("governance_contract_version")
+            ):
+                errors.append("Python resolver cannot claim native resolver provenance")
+            if row.get("governance_resolver") == "prolog" and (
+                row["governance_backend"] != "swipl"
+                or not row.get("governance_resolver_sha256")
+                or row.get("governance_contract_version") != "pcds-governance-v1"
+            ):
+                errors.append("Prolog resolver requires its backend, source hash and contract version")
             mode, backend = row["governance_mode"], row["governance_backend"]
             if mode not in {"disabled", "optional", "required"}:
                 errors.append("invalid governance mode")

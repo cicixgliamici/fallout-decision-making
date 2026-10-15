@@ -120,18 +120,26 @@ when constructing a hand-authored scenario; see [limitations](limitations.md).
 ## Optional Layers and Tests
 
 The [versioned governance contract](governance_contract.md) is a standalone
-decision boundary, separate from the live simulation path.
+decision boundary used by the native simulation path.
 [governance_contract.py](../src/pcds/governance_contract.py) validates snapshots
 and defines request/response/certificate schemas;
 [governance_reference.py](../src/pcds/governance_reference.py) wraps the existing
-resolver and independently checks its witnesses. `pcds govern` and
-`pcds check-governance` make that boundary inspectable before a Prolog migration.
-These commands currently run in Python and do not claim Lean certification.
+reference resolver and independently checks witnesses from either producer.
+[governance_prolog.py](../src/pcds/governance_prolog.py) transports exact snapshots
+to [governance_decision.pl](../rules/governance_decision.pl), which produces the
+complete decision without Python voting callbacks. `pcds govern --backend prolog`
+and `pcds check-governance` expose this boundary without claiming Lean certification.
 
 [prolog_rules.py](../src/pcds/prolog_rules.py) bridges to the optional
-[governance rules](../rules/governance.pl). Python still resolves delegations.
-The [Lean directory](../formal/lean/Wasteland) contains definitions and small
-proofs; it is not a translation or verification of the simulation.
+[governance rules](../rules/governance.pl). A loaded native backend uses the pure
+Prolog resolver by default; `--governance-resolver python_reference` preserves
+the previous implementation with identical institutional checks for comparison.
+The [Lean decision model](../formal/lean/Wasteland/Governance.lean) computes the
+contract independently and proves selected invariants. [governance_lean.py](../src/pcds/governance_lean.py)
+translates data into a concrete `Conforms` proposition and invokes pinned Lean
+through `pcds certify-governance`. The kernel checks `by decide`; no Python
+semantic acceptance is trusted. See [certification scope](lean_certification.md)
+for the JSON/translation trust boundary and remaining proofs.
 
 Use tests as concrete examples: [assessment tests](../tests/test_assessment.py)
 cover information and changing needs; [voting tests](../tests/test_voting.py)

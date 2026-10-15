@@ -1,0 +1,128 @@
+{
+  "schema_version": "pcds-governance-v1",
+  "decision_id": "contract-example:cycle-and-override",
+  "rule": "liquid_democracy",
+  "institutional_checks": true,
+  "approval_k": 2,
+  "delegation_max_depth": 3,
+  "policy_order": [
+    "farming",
+    "medicine",
+    "defense",
+    "exploration"
+  ],
+  "residents": [
+    {
+      "name": "ada",
+      "role": "farmer",
+      "alive": true,
+      "sanctioned": false,
+      "ranking": [
+        "farming",
+        "medicine",
+        "defense",
+        "exploration"
+      ]
+    },
+    {
+      "name": "bram",
+      "role": "farmer",
+      "alive": true,
+      "sanctioned": false,
+      "ranking": [
+        "medicine",
+        "farming",
+        "defense",
+        "exploration"
+      ]
+    },
+    {
+      "name": "cleo",
+      "role": "farmer",
+      "alive": true,
+      "sanctioned": false,
+      "ranking": [
+        "defense",
+        "farming",
+        "medicine",
+        "exploration"
+      ]
+    },
+    {
+      "name": "dax",
+      "role": "guard",
+      "alive": true,
+      "sanctioned": false,
+      "ranking": [
+        "exploration",
+        "farming",
+        "medicine",
+        "defense"
+      ]
+    }
+  ],
+  "trust_links": [
+    {
+      "source": "ada",
+      "target": "bram",
+      "weight": {
+        "numerator": 3602879701896397,
+        "denominator": 4503599627370496
+      }
+    },
+    {
+      "source": "ada",
+      "target": "cleo",
+      "weight": {
+        "numerator": 3602879701896397,
+        "denominator": 4503599627370496
+      }
+    },
+    {
+      "source": "bram",
+      "target": "cleo",
+      "weight": {
+        "numerator": 1,
+        "denominator": 1
+      }
+    },
+    {
+      "source": "cleo",
+      "target": "bram",
+      "weight": {
+        "numerator": 1,
+        "denominator": 1
+      }
+    },
+    {
+      "source": "cleo",
+      "target": "dax",
+      "weight": {
+        "numerator": 3602879701896397,
+        "denominator": 4503599627370496
+      }
+    }
+  ],
+  "resources": {
+    "food": {
+      "numerator": 100,
+      "denominator": 1
+    },
+    "water": {
+      "numerator": 100,
+      "denominator": 1
+    },
+    "medicine": {
+      "numerator": 50,
+      "denominator": 1
+    },
+    "energy": {
+      "numerator": 2,
+      "denominator": 1
+    },
+    "security": {
+      "numerator": 14,
+      "denominator": 1
+    }
+  }
+}

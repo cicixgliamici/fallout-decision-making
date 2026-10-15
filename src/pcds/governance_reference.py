@@ -3,7 +3,7 @@
 The producer uses the existing voting resolver. The checker independently checks
 greedy path choices, stopping conditions, complete ballots, tally, and permission
 override from contract data. This is executable conformance checking, not a Lean
-proof or evidence that Prolog has taken over delegation.
+proof. This module remains the migration oracle and independent witness checker.
 """
 
 from __future__ import annotations
@@ -86,7 +86,7 @@ def _permission(request: GovernanceRequest, policy: Policy) -> PolicyPermission:
 
 
 def decide_governance(request: GovernanceRequest) -> GovernanceSuccess:
-    """Wrap the current resolver in the new contract; the live simulator is unchanged."""
+    """Produce a reference decision for comparison with the native Prolog resolver."""
     request = parse_request(request.model_dump(mode="python", warnings=False))
     agents, graph = _legacy_world(request)
     eligible = {agent.name: agent for agent in agents if agent.alive and not agent.sanctioned}

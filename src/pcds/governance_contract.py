@@ -31,7 +31,7 @@ ErrorCode = Literal[
 ]
 
 # Freeze the simulation's current expertise map as part of this version's meaning.
-# Prolog's illustrative expert_for/2 is not authoritative for current delegation.
+# The Prolog resolver implements this same map; differential tests guard drift.
 ROLE_EXPERTISE = {
     Role.DOCTOR: Policy.MEDICINE, Role.FARMER: Policy.FARMING,
     Role.ENGINEER: Policy.DEFENSE, Role.GUARD: Policy.DEFENSE,

@@ -2,8 +2,11 @@
 
 Status: **implemented** as validated data models, published JSON schemas, a Python
 reference producer, an independent Python witness checker, and standalone CLI
-commands. The live simulator still uses its existing decision path. Producing
-these responses in Prolog and proving the checker sound in Lean remain proposed.
+commands. A pure Prolog producer implements the same contract and supplies live
+simulation decisions when Prolog is loaded. The Python producer remains the
+migration reference. [Initial Lean certification](lean_certification.md) proves
+selected invariants and concrete translated conformance; general refinement and
+adapter correctness remain open.
 
 The purpose is to make the current procedure explicit before moving it between
 languages. Neither a favorable election result nor a successful certificate check
@@ -28,8 +31,8 @@ cannot faithfully describe instead of silently interpreting them differently.
 `institutional_checks` is a semantic input, not a backend claim. True asks the
 reference producer to evaluate the declared core permissions in Python. It does
 not load SWI-Prolog. The existing `--require-prolog` execution policy, backend
-versions, and source provenance remain separate runtime responsibilities. A future
-Prolog adapter must enforce those responsibilities and implement this same contract.
+versions, and source provenance remain separate runtime responsibilities. The
+Prolog adapter enforces those responsibilities and implements this same contract.
 
 ## Input State
 
@@ -58,10 +61,9 @@ identifiers. Their expertise map is part of the semantic version:
 | engineer, guard | defense |
 | scavenger | exploration |
 
-This is the **actual Python delegation map**, including elders. Prolog's current
-illustrative `expert_for/2` declarations are not used by the existing resolver
-and are not authoritative for this contract. Moving delegation to Prolog must
-resolve that known difference.
+This is the **shared delegation map**, including elders. Prolog's `expertise/2`
+and the retained Python reference implement the same mapping. Differential tests
+include elders to protect this compatibility requirement.
 
 Historical graph endpoints that are not resident identities are permitted. They
 cannot receive a vote. Dead and sanctioned recipients are likewise ignored.
@@ -295,20 +297,41 @@ An [error envelope](../data/governance/v1/example_error.json) illustrates a reje
 version. Tests also reject altered winners, omitted/duplicated ballots, lower-trust
 paths, false cycle representatives, wrong permissions, and mismatched requests.
 They compare all four rules with actual adaptive simulation rounds. A separate
-real-Prolog test checks the declared core eligibility and permission predicates;
-it does not claim that Prolog produces delegation certificates.
+real-Prolog suite compares complete decisions and certificates, deterministic
+ties, cycles, the depth budget, exact fractions, empty electorates and matched
+adaptive trajectories. The original core-permission checks remain separate cases.
+
+Use `pcds govern --backend prolog` with the same request/output options to produce
+the witness in SWI-Prolog. This requires the pinned native runtime and returns a
+structured error on startup, version, rule-loading or query failure. Its adapter
+transports ground dictionaries and exact integers; it does not call the Python
+voting producer. The independent checker validates the response before use.
+Literal resident names `true` and `false` stay names: only declared boolean fields
+are decoded as booleans.
 
 ## Compatibility and Next Proof Obligations
 
-This is an additive standalone interface. Existing scenario JSON, `run`, `compare`,
-`suite`, seed behavior, numerical exports, and the live voting path are unchanged.
-No research outputs need regeneration for a changed mechanism in this step.
-Source hashes change because new modules are included; historical evidence keeps
-its original identity. The standalone input validation is deliberately stronger
-than the legacy helper APIs and does not silently tighten existing scenario input.
+The live simulator now uses this contract when a real Prolog backend is loaded.
+The default `governance_resolver="auto"` uses Prolog in that case; runs without
+Prolog keep Python voting, and optional startup failures retain a recorded Python
+fallback. `governance_resolver="python_reference"` (CLI:
+`--governance-resolver python_reference`) selects the previous resolver with the
+same institutional checks, enabling a matched migration comparison. Native query
+or witness failures stop execution and never substitute a reference decision.
 
-Before replacing the live resolver, demonstrate matched behavior against this
-contract. Before claiming Lean certification, formalize the accepted request domain
+Scenario files, existing commands and RNG keys are preserved. Contract validation
+applies to native decision snapshots and rejects inputs outside its declared
+domain. New metadata records `resolver`, `resolver_sha256` and `contract_version`
+separately from backend/version/core-rule identity. Fully historical identities
+remain readable; partial or mixed identities cannot support paired inference.
+Per-round witnesses are checked but not stored in ordinary round exports; use
+the standalone command to retain a complete request/response example.
+
+Matched numerical behavior is checked, rather than assumed for every input.
+Historical experiments retain their source identities and do not establish native
+voting coverage. Regenerate an experiment when reporting results specifically as
+Prolog executions; the migration audit is not a rerun of the full research study.
+Before claiming Lean certification, formalize the accepted request domain
 and checker and prove, at minimum:
 
 1. Accepted certificates imply the declared complete decision semantics, including
@@ -319,9 +342,12 @@ and checker and prove, at minimum:
    depth behavior.
 4. Tally, deterministic winner, and permission override follow from those ballots.
 
-These proof obligations are **proposed**, not proved by the Python checks or by
-the existing Lean definitions. Verification of physical transitions, runtime
-attestation, and empirical validation remain separate questions.
+These obligations are **partially implemented** in the
+[Lean decision model and certification command](lean_certification.md).
+Selected invariants and concrete translated conformance are proved. Universal
+runtime equivalence, general declarative refinement and adapter correctness
+remain open. Verification of physical transitions, runtime attestation, and
+empirical validation remain separate questions.
 
 The [dated validation record](evidence/2026-10-15/governance_contract_validation.json)
 records executed checks, their environments, source identities, and normalized

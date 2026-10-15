@@ -1,8 +1,8 @@
 """Apply institutional checks using a recorded backend with optional strict loading.
 
-Python still resolves voting and delegation. Required mode rejects unavailable or
-unpinned runtimes; optional mode records its fallback rather than disguising it
-as real Prolog execution. Query failures never trigger a mid-run backend switch.
+The pure contract resolver also owns voting and delegation when selected.
+Required mode rejects unavailable or unpinned runtimes; optional mode records
+its fallback. Query failures never trigger a mid-run backend switch.
 """
 
 from __future__ import annotations
@@ -29,6 +29,10 @@ def governance_versions() -> dict[str, str]:
 class PrologBackendError(RuntimeError):
     """The requested institutional backend could not be initialized or queried."""
 
+    def __init__(self, message: str, code: str = "backend_query_failed") -> None:
+        super().__init__(message)
+        self.code = code
+
 
 class PrologRuleEngine:
     """Mirror one sequential simulation world into SWI-Prolog via PySwip.
@@ -50,11 +54,12 @@ class PrologRuleEngine:
             self._prolog = None
             self.info = self.info.model_copy(update={"fallback_reason": reason})
             if required:
-                raise PrologBackendError(f"Required SWI-Prolog backend unavailable: {reason}") from error
+                code = error.code if isinstance(error, PrologBackendError) else "backend_unavailable"
+                raise PrologBackendError(f"Required SWI-Prolog backend unavailable: {reason}", code) from error
 
     def _load(self, rules: Path, required: bool) -> None:
         """Validate the rule file and runtime before enabling institutional checks."""
-        contents = rules.read_bytes()
+        contents = _rule_contents(rules)
         self.info = self.info.model_copy(update={
             "rules_sha256": sha256(contents.replace(b"\r\n", b"\n")).hexdigest(),
             "pyswip_version": version("pyswip"),
@@ -67,19 +72,28 @@ class PrologRuleEngine:
         self.info = self.info.model_copy(update={"swipl_version": runtime})
         if required:
             self._require_versions()
+        resolver = PROJECT_ROOT / "rules/governance_decision.pl"
+        self.resolver_sha256 = sha256(_rule_contents(resolver).replace(b"\r\n", b"\n")).hexdigest()
         # consult/1 can report syntax errors yet succeed. Parse all terms first
         # with exceptions enabled so a partially loaded file cannot pass startup.
         self._query("use_module(library(readutil))")
-        self._query(f"read_file_to_terms({_atom(rules.as_posix())}, _, [syntax_errors(error)])")
-        self._query(f"consult({_atom(rules.as_posix())})")
+        try:
+            self._query(f"read_file_to_terms({_atom(rules.as_posix())}, _, [syntax_errors(error)])")
+            self._query(f"read_file_to_terms({_atom(resolver.as_posix())}, _, [syntax_errors(error)])")
+            self._query(f"consult({_atom(rules.as_posix())})")
+            self._query(f"use_module({_atom(resolver.as_posix())})")
+        except PrologBackendError as error:
+            raise PrologBackendError(str(error), "rule_loading_failed") from error
+        if not self._query(f"source_file(pcds_governance_v1:decide(_,_,_), {_atom(resolver.as_posix())})"):
+            raise PrologBackendError("Missing contract resolver", "rule_loading_failed")
         for predicate in ("eligible_to_vote/1", "allowed_policy/1"):
             if not self._query(f"current_predicate({predicate})"):
-                raise PrologBackendError(f"Missing governance predicate: {predicate}")
+                raise PrologBackendError(f"Missing governance predicate: {predicate}", "rule_loading_failed")
             head = predicate.replace("/1", "(_)")
             if not self._query(f"source_file({head}, {_atom(rules.as_posix())})"):
                 # PySwip shares an interpreter: a predicate left by an earlier
                 # engine must not make a different, incomplete file look valid.
-                raise PrologBackendError(f"Governance predicate not defined by rule file: {predicate}")
+                raise PrologBackendError(f"Governance predicate not defined by rule file: {predicate}", "rule_loading_failed")
         self.available = True
         self.info = self.info.model_copy(update={"backend": "swipl"})
 
@@ -88,7 +102,7 @@ class PrologRuleEngine:
         for name, actual in (("swipl", self.info.swipl_version),
                              ("pyswip", self.info.pyswip_version)):
             if actual != expected[name]:
-                raise PrologBackendError(f"{name} version {actual}; required {expected[name]}")
+                raise PrologBackendError(f"{name} version {actual}; required {expected[name]}", "backend_version_mismatch")
 
     def _query(self, goal: str) -> list[dict]:
         """Exhaust generators before the next query; PySwip forbids nested queries."""
@@ -151,6 +165,14 @@ class PrologRuleEngine:
             self._query(f"assertz(sanctioned({name}))")
 
 
+def _rule_contents(path: Path) -> bytes:
+    """Classify source failures separately from missing native libraries."""
+    try:
+        return path.read_bytes()
+    except OSError as error:
+        raise PrologBackendError(f"{type(error).__name__}: {error}", "rule_loading_failed") from error
+
+
 def _fallback_policy_allowed(policy: Policy, state: CommunityState | None) -> bool:
     """Mirror only declared institutional thresholds, not delegation or physics."""
     if policy not in set(Policy):
@@ -166,4 +188,7 @@ def _fallback_policy_allowed(policy: Policy, state: CommunityState | None) -> bo
 
 def _atom(value: str) -> str:
     """Quote data as atoms, preserving distinct names and preventing goal injection."""
-    return "'" + value.replace("\\", "\\\\").replace("'", "\\'") + "'"
+    escaped = value.replace("\\", "\\\\").replace("'", "\\'")
+    # Escape line breaks and other controls as data, never as source layout.
+    escaped = "".join(f"\\x{ord(char):x}\\" if ord(char) < 32 else char for char in escaped)
+    return "'" + escaped + "'"

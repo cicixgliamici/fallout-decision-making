@@ -7,20 +7,23 @@ checks occur in a round.
 
 The [governance contract](governance_contract.md) now specifies the complete
 current decision procedure as versioned input/output/certificate data. Its
-standalone Python producer/checker preserve existing tie-breaking, cycles,
-depth limits, and post-election permissions. The simulator's existing Prolog
-integration below is unchanged; Prolog certificate production and Lean checker
-proofs remain proposed.
+Python reference and pure Prolog producer preserve existing tie-breaking, cycles,
+depth limits, and post-election permissions. An independent Python checker checks
+every native witness before policy effects. Optional
+[Lean certification](lean_certification.md) now proves concrete translated
+conformance and selected general invariants.
 
 ## What the Python Simulator Uses
 
 Without `--use-prolog` or `--require-prolog`, eligibility is checked in Python: members must be alive
 and unsanctioned. Policy-admissibility checks from the optional bridge are not
-applied. Python resolves trust-based delegation in every mode.
+applied. Python remains the voting resolver in this mode.
 
-With `--use-prolog`, [PrologRuleEngine](../src/pcds/prolog_rules.py) mirrors current
-members, trust links, and stocks into logical facts before checking eligibility
-and policy permission. If SWI-Prolog, PySwip, or the rule file cannot be loaded,
+With `--use-prolog`, [PrologRuleEngine](../src/pcds/prolog_rules.py) loads the
+native backend. The simulator sends an ordered contract snapshot to the pure
+[decision module](../rules/governance_decision.pl), which computes eligibility,
+delegation, tally, policy permission and a complete witness. If SWI-Prolog,
+PySwip, or the rule file cannot be loaded,
 the bridge sets `available` to false and uses its Python fallback. Enabling the
 option therefore does not prove the real Prolog engine was used. The effective
 backend, mode, versions, rule-file hash, and any fallback reason are now recorded
@@ -35,12 +38,14 @@ errors also stop the run; they never switch a running experiment to Python.
 | Request | Effective checks | Recorded backend |
 | --- | --- | --- |
 | No Prolog flag | Python eligibility only; no institutional policy filter | `python`, mode `disabled` |
-| `--use-prolog`, loaded successfully | Real Prolog eligibility and policy permission | `swipl`, mode `optional` |
+| `--use-prolog`, loaded successfully | Real Prolog complete governance decision | `swipl`, mode `optional` |
 | `--use-prolog`, loading fails | Python eligibility and mirrored policy thresholds | `python_fallback`, mode `optional`, with reason |
 | `--require-prolog` | Pinned real backend, or an explicit error | `swipl`, mode `required` |
 
-The mode applies to institutional checks, not to the voting/delegation resolver,
-which remains Python in all four cases. A successfully loaded optional backend
+Mode identifies institutional checks. The separate `resolver` field identifies
+the actual voting producer: `prolog` for a loaded backend by default, `python`
+otherwise. Select `--governance-resolver python_reference` to keep Python voting
+under the same Prolog checks for migration comparisons. A successfully loaded optional backend
 can have a different version; its actual version is recorded, and it is not a
 pinned research execution.
 
@@ -64,13 +69,20 @@ If a chosen policy is prohibited, the simulator takes the first allowed policy
 in declaration order. Under the default rules this is farming. The fallback is
 simple and deterministic, not an optimization of community outcomes.
 
-## Declared Delegation Rules
+## Delegation and Transport
 
-[governance.pl](../rules/governance.pl) also declares role-based expertise and
-`can_delegate/3`. These declarations illustrate logical rules but are not queried
-by the Python delegation resolver. Their role map is not identical: Python also
-treats elders as medicine specialists, while the Prolog declarations do not.
-Do not claim that Prolog currently controls the simulator's delegation chains.
+[governance_decision.pl](../rules/governance_decision.pl) owns ordered expert
+selection, single-hop and liquid paths, original-voter cycle fallback, the
+three-hop budget, contributions and deterministic tally. It compares trust
+fractions by integer cross products. Both implementations treat elders as
+medicine specialists. [governance.pl](../rules/governance.pl) imports this
+expertise mapping; its legacy `can_delegate/3` remains available but is not the
+complete resolver. The Python reference is retained temporarily for comparison.
+
+The native decision relation reads only the supplied snapshot, without dynamic
+world facts, physical effects or random draws. Native dictionaries avoid a JSON
+library dependency in SWI-Prolog. A response must be unique and pass independent
+contract checking; a bad response stops the run before physical effects.
 
 The bridge quotes names as Prolog atoms and escapes quotes/backslashes, keeping
 `a-b` and `a_b` distinct. Synchronization clears facts at their declared arities
@@ -114,7 +126,8 @@ hosted run; local results are recorded in [project status](project_status.md).
 The Prolog checks use the actual bridge and interpreter: eligibility combinations,
 threshold boundaries, stale-fact cleanup, distinct/quoted identities, invalid
 files, deterministic replay, CLI exports, suite metadata, and process-worker
-consistency. They do not establish equivalence of unimplemented delegation rules.
+consistency, complete delegation certificates and matched full trajectories.
+Finite test coverage does not establish equivalence for every valid input.
 
 Example strict research execution:
 
@@ -127,8 +140,9 @@ pcds suite --require-prolog --runs 2 --steps 3 --output-dir results/prolog-suite
 These are integration demonstrations, not sufficiently replicated research
 results. CSV columns beginning `governance_` identify the actual treatment.
 Pairing rejects mixed modes, backends, versions, or rule hashes within a
-condition, even when external random draws match. Historical tables without
-these fields remain readable but do not establish their execution backend.
+condition, including resolver/hash/contract identity, even when external random
+draws match. Fully historical tables remain readable but do not establish native
+voting coverage. Partial resolver identities are rejected.
 
 The [2026-10-15 integration record](evidence/2026-10-15/native_integration.json)
 identifies the actually checked environments. A
@@ -138,12 +152,16 @@ run demonstrates the integration; it is not a new research comparison.
 
 ## Lean's Different Role
 
-The [Lean sources](../formal/lean/Wasteland) define a small policy set, formal
-agents, ballots, score winners, and a direct delegation relation. Current proofs
-largely unpack those definitions. They do not verify health dynamics, statistical
-outputs, vote conservation, chain termination, or equivalence with Python.
+The [Lean governance model](../formal/lean/Wasteland/Governance.lean) now computes
+contract-v1 decisions independently. It proves ballot count/coverage, bounded
+paths, cycle fallback, score-winner maximality and selected-policy permission.
+`pcds certify-governance` translates one JSON request/witness pair into a
+kernel-checked concrete conformance proof. The older small definitions remain
+available. See [the exact scope](lean_certification.md), including assumptions
+on next-hop closure, unique identities and the trusted JSON/literal adapter.
 The Lean toolchain is optional for simulation and pinned to
 `leanprover/lean4:v4.19.0`. The separate integration check verifies the selected
-version and runs `lake build` against the actual sources. This establishes that
-the small formal package builds; it does not connect its proofs to Python or
-Prolog execution. Proof-carrying decisions remain proposed work.
+version and explicitly runs `lake build Wasteland` against the actual sources.
+The library is also now a default target. Concrete certificates connect external
+witnesses to Lean's computation; they do not prove universal equivalence of
+Python/Prolog implementations, physical transitions, or empirical validity.

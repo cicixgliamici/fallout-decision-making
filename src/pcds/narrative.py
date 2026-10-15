@@ -97,6 +97,7 @@ def render_report(
         f"Rule: {first.rule} | Seed: {first.simulation_seed}",
         f"Physics: {first.physics_schema}",
         f"Governance checks: {first.governance.mode} | Backend: {first.governance.backend}",
+        f"Voting resolver: {first.governance.resolver}",
         f"SWI-Prolog: {first.governance.swipl_version or 'not loaded'} | "
         f"PySwip: {first.governance.pyswip_version or 'not loaded'}",
         "Cycles are decision allocations, not calendar days or work shifts.",

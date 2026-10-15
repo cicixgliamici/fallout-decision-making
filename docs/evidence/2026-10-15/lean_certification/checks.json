@@ -1,0 +1,148 @@
+{
+  "recorded_at_utc": "2026-10-15T16:05:41.563592+00:00",
+  "scope": "First Lean invariants and concrete translated contract-v1 certification",
+  "python": "3.14.3",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "lean": "4.19.0",
+  "python_checks": {
+    "command": "python -m pytest -q -p no:cacheprovider",
+    "native_checks_deselected": 117,
+    "tests": 309,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "junit_sha256": "882c1bcec4bf75a80963dbb4a741b37c3dd34d649222aa2ff8556371d57327b8",
+    "test_cases_by_module": {
+      "tests.test_accounting": 30,
+      "tests.test_assessment": 26,
+      "tests.test_cli": 11,
+      "tests.test_events": 12,
+      "tests.test_experiments": 15,
+      "tests.test_governance_backend": 13,
+      "tests.test_governance_contract": 79,
+      "tests.test_governance_lean": 13,
+      "tests.test_governance_prolog": 9,
+      "tests.test_metrics": 18,
+      "tests.test_paired_analysis": 15,
+      "tests.test_randomness": 6,
+      "tests.test_research_reporting": 4,
+      "tests.test_resource_balance": 2,
+      "tests.test_simulation": 29,
+      "tests.test_voting": 27
+    }
+  },
+  "lean_checks": {
+    "command": "python -m pytest -q -m lean tests/integration -p no:cacheprovider --basetemp .local/lean-tests-hashes",
+    "prolog_checks_deselected": 112,
+    "tests": 5,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "junit_sha256": "16f7a6bf12d51d4b354a40d0f7bcfc57d0e27ec36a36a6293af2a784a1f707fb",
+    "test_cases_by_module": {
+      "tests.integration.test_lean": 1,
+      "tests.integration.test_lean_governance": 4
+    }
+  },
+  "general_theorems": [
+    "ballot_count",
+    "ballot_voters",
+    "follow_path_bound",
+    "cycle_restores_origin",
+    "follow_holder_eligible",
+    "prefer_ge_incumbent",
+    "prefer_ge_challenger",
+    "winner_maximal",
+    "equal_scores_choose_farming",
+    "equal_scores_keep_incumbent",
+    "farming_allowed",
+    "selected_allowed",
+    "accepted_ballot_count",
+    "accepted_ballot_voters",
+    "accepted_unique_voters",
+    "accepted_winner_maximal",
+    "accepted_selected_allowed"
+  ],
+  "concrete_test_coverage": {
+    "valid_rule_electorate_cases": 8,
+    "proved_rejected_mutations": 15,
+    "cli_forged_winner_rejected_without_receipt": true,
+    "source_and_proof_artifact_hashes_checked": true
+  },
+  "fresh_prolog_execution": {
+    "swipl": "9.2.9",
+    "pyswip": "0.3.3",
+    "environment": "WSL Ubuntu / Python 3.12.3",
+    "command": "python -m pcds.cli govern --backend prolog --request data/governance/v1/example_request.json --output .local/lean-prolog-fresh-response.json"
+  },
+  "certification_command": "python -m pcds.cli certify-governance --request data/governance/v1/example_request.json --response .local/lean-prolog-fresh-response.json --output-dir .local/lean-evidence-certificate",
+  "certified_request_sha256": "209bee77997499833d17f14155b9e06e09e29430d9d86ae172fe2977bd7e9ef0",
+  "certified_response_sha256": "152f83f307c8babf765d41a92ba5a47a30e7e27a1c560e94195ccb80184e634f",
+  "axiom_report": "'GovernanceCertificate.certificate_conforms' depends on axioms: [propext]",
+  "source_fingerprints": {
+    "formal/lean/lakefile.lean": "ea55b73dacf8cc76866cd4eb41ea250a7528c783f40af500e4c8a24829116945",
+    "formal/lean/lean-toolchain": "55e97be96000b5e9e290c9e74482e5e317861499a5540353ce845471bded8cea",
+    "formal/lean/Wasteland/Basic.lean": "945fb2a010d78f9367e749aa3d66c5d409d6dad515e45fc1c74749ab3c0fd889",
+    "formal/lean/Wasteland/Delegation.lean": "a58d8417ea9e4c116d0383e48e37aad856e41cd6b0914d7a219df4a951cfa9b5",
+    "formal/lean/Wasteland/Governance.lean": "77741f7d222d1d562a3cf85bfe6b411c7808b057e043c36e9387dd45b4f7781a",
+    "formal/lean/Wasteland.lean": "889124b48bac7773c4975daa2dbe611424c5be6522e570f7daa841a0cb1bed48",
+    "pyproject.toml": "55e5a946427bb953cf3dbc405363c7a1fda8ebb3c9de4ee4336440669f2fe1e1",
+    "requirements.txt": "f1f4835913ea58b0912b4f6b52691eacaa7a4afdeaf684266035f3a4d093a1e5",
+    "rules/governance.pl": "629483d1655b2e92850c093222db6855a9c7b0d101ce67fe89d11b85c8691697",
+    "rules/governance_decision.pl": "2dc71decfd8f53fbf19249ee85722c17d93526109a07b22e35325da5a3d13152",
+    "src/pcds/__init__.py": "f8209f1058b3bf4d47f08850d59153e48ffddd4dcdeaf2e1de538893f71a19db",
+    "src/pcds/assessment.py": "fd26650d5cbb68f2536b55601f8c80fb321569f9d92eda60669ba308625bc819",
+    "src/pcds/cli.py": "11776785b1425e81066b2209f86304e18685ab534295eefc108ffb35a069dbb8",
+    "src/pcds/events.py": "9d3f55b3ccf9fae5d7713a32e8092da1a3d5ec80b7e9dfe55a1cfd1bd4123730",
+    "src/pcds/experiments.py": "f10a2270c7ada99d1f9deb08cc803dc4af46af2d65d592b08d70dc45bf1a813f",
+    "src/pcds/factory.py": "aaaa2204eeb9e27676f546353657cf1eaca35ae6e317bdc996d697177bca454b",
+    "src/pcds/governance_contract.py": "08992c2174f0db1e0c6d348c40940305fd043ad79b81b3a9273a393efe83cc54",
+    "src/pcds/governance_lean.py": "e8ab18e2b807af7f342ee605e07f83cc697a799b57f177ba2fb6d12da5447141",
+    "src/pcds/governance_prolog.py": "3cb56afb5b80451f0798983817898d1638d243cc60285c82ff4d237abe63a08c",
+    "src/pcds/governance_reference.py": "523872eca8fc48beee06406c41c0948e00f0ad6bc4f3e77dc2c0ba31e5e00c5c",
+    "src/pcds/metric_definitions.py": "aefa6629185d0a8c4af450e75ad563abd078533c40127d2c1b9d4dd8ecd7f7a0",
+    "src/pcds/metrics.py": "4909da8496e074b6a35ff3373d964eb3389e4ce1b441e039aa7b99d33e1771b4",
+    "src/pcds/models.py": "643903220ce717b96f6e4803a686fddf06a0820c0abdd9785ef7725fb8b1a26e",
+    "src/pcds/narrative.py": "24d92e70ac6f4d9d7c7f7d5e38f6217592ac47f0a196c83a5a0ddf0a884e1ff4",
+    "src/pcds/paired_analysis.py": "1cc4ad0fa20be81fdd415f4359550efeb81861f7cf9540dda65f2086a5ff5ad3",
+    "src/pcds/prolog_rules.py": "b9ee142aba026b54dc06b2bc12a1758284b7b76f04e3c65c9e6447364b1bba05",
+    "src/pcds/provenance.py": "40a00576cd4ee4332f0ee28dcf0a4c76ac7690aca4d4165e8d121ba7d146b40e",
+    "src/pcds/randomness.py": "d3ed2adbd52b0efbc05151d34c06f2f0e5f76702382de57772aaf2a0f38eb523",
+    "src/pcds/research_reporting.py": "b2fb1103d8bfcdbd3803948fae5c4c14c74d6540997a11b2a71657175212dab8",
+    "src/pcds/scenarios.py": "52cc625cdd488dd65ff6e25023bbbaf9df05bd0070f5148bc2c44dc9f9d34f1b",
+    "src/pcds/simulation.py": "1bbcfd9ac36cb2468c556b184fc7c789afa57eb8ea80593dbeddc06e7d530e7b",
+    "src/pcds/voting.py": "da0e9a070ac77d32b804164766967d1d2cf12fe55385d808bb9fbd51a7c8a3df",
+    "toolchains.toml": "8c6091fd773ae50d2264a84210a2f6ba12a6621ccd410e41f472a1b7cc75dcdd"
+  },
+  "retained_artifact_sha256": {
+    "request.json": "69591369b4c4c5e0986acf33f5117483eb319c781aadae708ce40d3f0d59c1c3",
+    "response.json": "33d8b3eb522f23cc8a0d3cb6091d26121bda681c526daca661689d86f57885b3",
+    "GovernanceCertificate.lean": "95157dae061feaaa88820442437c0f1763463b34ad050ed97203281325f31d19",
+    "certification.json": "75720407ce6ded196bbfcda9afc036c4de4cd2e111852a55c5007d983afd4180"
+  },
+  "test_source_sha256": {
+    "tests/test_governance_lean.py": "47a7443d5caf096874c7f31ed8df8ada42bea887e92bbb3b166397995695e78c",
+    "tests/integration/test_lean.py": "79f2f052321c9246448a7c06cd12b88e0d61febfcac4462fa29c6f0130535ef4",
+    "tests/integration/test_lean_governance.py": "ab878988d1d375eeb0fcc04cc638b985a9d505253a68c75170aa8b470c8addeb"
+  },
+  "additional_checks": [
+    "python -m ruff check src tests experiments: passed",
+    "git diff --check: passed"
+  ],
+  "prior_build_gap_corrected": "Previous lake build had no default target; current checks explicitly compile Wasteland and require Governance.olean",
+  "not_performed": [
+    "full Prolog regression rerun",
+    "full research study",
+    "hosted CI",
+    "native Windows SWI-Prolog check"
+  ],
+  "not_proved": [
+    "JSON/schema adapter correctness",
+    "SHA-256 correctness",
+    "literal translation correctness",
+    "general declarative refinement",
+    "universal Prolog/Python equivalence",
+    "physical dynamics",
+    "empirical validity"
+  ]
+}

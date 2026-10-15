@@ -124,6 +124,7 @@ def run_experiment_suite(
     workers: int = 1,
     use_prolog: bool = False,
     require_prolog: bool = False,
+    governance_resolver: str = "auto",
 ) -> dict[str, Path]:
     """Run predefined scarcity, information, and trust conditions on matching seeds.
 
@@ -154,7 +155,7 @@ def run_experiment_suite(
     # workers controls execution only; it is not another experimental treatment.
     tasks = [
         (name, _scenario_with_overrides(base, overrides), runs, steps, seed,
-         use_prolog, require_prolog)
+         use_prolog, require_prolog, governance_resolver)
         for name, overrides in conditions.items()
     ]
     for df in _condition_frames(tasks, workers):
@@ -265,9 +266,11 @@ def _run_condition(task: tuple) -> pl.DataFrame:
     """Keep a condition independent so parallel execution cannot share mutable state."""
     name, scenario, runs, steps, seed, *backend_options = task
     # Retain the existing five-element task interface used by small Python callers.
-    use_prolog, require_prolog = backend_options or (False, False)
+    use_prolog, require_prolog = backend_options[:2] or (False, False)
+    resolver = backend_options[2] if len(backend_options) > 2 else "auto"
     frame = compare_rules(runs=runs, steps=steps, seed=seed, scenario=scenario,
-                          use_prolog=use_prolog, require_prolog=require_prolog)
+                          use_prolog=use_prolog, require_prolog=require_prolog,
+                          governance_resolver=resolver)
     return frame.with_columns(pl.lit(name).alias("experiment"))
 
 

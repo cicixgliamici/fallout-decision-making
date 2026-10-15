@@ -60,17 +60,23 @@ does not validate the model or eliminate every possible source of bias.
 
 ## Optional Layers and Release Readiness
 
-Prolog provides limited optional institutional checks. Its declared delegation
-rules are not used to resolve Python's chains. Separate real-engine tests cover
-the bridge's eligibility and permission behavior, while the default Python test
-selection excludes those native checks. Lean covers small
-definitions, not simulator correctness. See [governance scope](rules.md).
+Prolog now resolves the complete governance contract when its backend is loaded:
+eligibility, delegation, tally, permissions and witnesses. Separate real-engine
+tests compare these decisions and matched full trajectories with the retained
+Python reference. The default Python test selection excludes native checks.
+Finite differential coverage does not prove equivalence on every input. Lean now
+proves selected invariants and certifies concrete translated witnesses, rather
+than the whole simulator. See [certification scope](lean_certification.md).
 
 The [governance contract](governance_contract.md) now supplies explicit input,
 decision, witness, and error semantics with a standalone Python producer/checker.
-Its witnesses are not Lean proofs or backend attestations. Prolog certificate
-production, formal checker soundness, and live-engine adoption remain proposed;
-the current simulator keeps its existing voting path.
+Ordinary witnesses are not themselves Lean proofs or backend attestations.
+`certify-governance` separately produces a kernel-checked concrete conformance
+proof. General refinement, adapter correctness and runtime equivalence remain
+open; JSON/schema validation, SHA-256 and literal translation are trusted.
+Python still constructs snapshots, assesses preferences,
+checks witnesses and applies physical effects. Per-round witnesses are checked
+but not retained in ordinary simulation exports; standalone `govern` retains one.
 
 Native reference versions and PySwip are pinned; other Python dependencies are
 not fully pinned, and resource

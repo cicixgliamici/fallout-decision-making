@@ -22,7 +22,8 @@ def test_pinned_lean_build():
                              stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=120)
     assert version.returncode == 0, version.stdout + version.stderr
     assert f"version {expected}," in version.stdout, version.stdout
-    build = subprocess.run([lake, "build"], cwd=formal, capture_output=True,
+    build = subprocess.run([lake, "build", "Wasteland"], cwd=formal, capture_output=True,
                            stdin=subprocess.DEVNULL, text=True, timeout=180)
     assert build.returncode == 0, build.stdout + build.stderr
     assert "declaration uses 'sorry'" not in build.stdout + build.stderr
+    assert (formal / ".lake/build/lib/lean/Wasteland/Governance.olean").is_file()

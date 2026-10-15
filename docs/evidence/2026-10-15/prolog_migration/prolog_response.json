@@ -1,0 +1,108 @@
+{
+  "schema_version": "pcds-governance-v1",
+  "status": "ok",
+  "decision": {
+    "mandate": "vote",
+    "eligible_voters": [
+      "ada",
+      "bram",
+      "cleo",
+      "dax"
+    ],
+    "representatives": {
+      "ada": "ada",
+      "bram": "bram",
+      "cleo": "dax",
+      "dax": "dax"
+    },
+    "scores": {
+      "medicine": 1,
+      "farming": 1,
+      "defense": 0,
+      "exploration": 2
+    },
+    "voted_policy": "exploration",
+    "selected_policy": "farming",
+    "permission_override": true
+  },
+  "certificate": {
+    "schema_version": "governance-witness-v1",
+    "request_sha256": "209bee77997499833d17f14155b9e06e09e29430d9d86ae172fe2977bd7e9ef0",
+    "ballots": [
+      {
+        "voter": "ada",
+        "topic": "farming",
+        "path": [
+          "ada",
+          "bram",
+          "cleo",
+          "bram"
+        ],
+        "stop_reason": "cycle",
+        "representative": "ada",
+        "votes_for": [
+          "farming"
+        ]
+      },
+      {
+        "voter": "bram",
+        "topic": "medicine",
+        "path": [
+          "bram"
+        ],
+        "stop_reason": "no_eligible_expert",
+        "representative": "bram",
+        "votes_for": [
+          "medicine"
+        ]
+      },
+      {
+        "voter": "cleo",
+        "topic": "defense",
+        "path": [
+          "cleo",
+          "dax"
+        ],
+        "stop_reason": "no_eligible_expert",
+        "representative": "dax",
+        "votes_for": [
+          "exploration"
+        ]
+      },
+      {
+        "voter": "dax",
+        "topic": "exploration",
+        "path": [
+          "dax"
+        ],
+        "stop_reason": "no_eligible_expert",
+        "representative": "dax",
+        "votes_for": [
+          "exploration"
+        ]
+      }
+    ],
+    "permissions": [
+      {
+        "policy": "farming",
+        "allowed": true,
+        "reason": "unconditional"
+      },
+      {
+        "policy": "medicine",
+        "allowed": true,
+        "reason": "unconditional"
+      },
+      {
+        "policy": "defense",
+        "allowed": true,
+        "reason": "requirements_met"
+      },
+      {
+        "policy": "exploration",
+        "allowed": false,
+        "reason": "security_below_15"
+      }
+    ]
+  }
+}
